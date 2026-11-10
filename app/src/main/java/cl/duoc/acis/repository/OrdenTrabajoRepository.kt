@@ -6,6 +6,7 @@ import cl.duoc.acis.model.OrdenTrabajo
 import cl.duoc.acis.model.OtConDetalle
 import cl.duoc.acis.model.Rol
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
 class OrdenTrabajoRepository(private val ordenTrabajoDao: OrdenTrabajoDao) {
 
@@ -18,7 +19,18 @@ class OrdenTrabajoRepository(private val ordenTrabajoDao: OrdenTrabajoDao) {
 
     fun getDetalle(id: Long): Flow<OtConDetalle?> = ordenTrabajoDao.getConDetalle(id)
 
-    suspend fun crear(ot: OrdenTrabajo): Long = ordenTrabajoDao.insert(ot)
+    fun getOt(id: Long): Flow<OrdenTrabajo?> = ordenTrabajoDao.getById(id)
+
+    /**
+     * Crea la OT y le asigna su número correlativo (OT-2026-0108) a partir del id que entrega Room.
+     * Devuelve el id de la OT nueva.
+     */
+    suspend fun crear(ot: OrdenTrabajo): Long {
+        val id = ordenTrabajoDao.insert(ot)
+        val numero = "OT-%d-%04d".format(LocalDate.now().year, 100 + id)
+        ordenTrabajoDao.update(ot.copy(id = id, numero = numero))
+        return id
+    }
 
     suspend fun actualizar(ot: OrdenTrabajo) = ordenTrabajoDao.update(ot)
 

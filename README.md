@@ -7,7 +7,7 @@ App Android para gestionar órdenes de trabajo (OT) en terreno de ACIS Servicios
 
 Hecha con Kotlin, Jetpack Compose y Material 3. Los datos se guardan en el celular con Room; no hay servidor.
 
-> **Estado:** en desarrollo. Hoy están la estructura, el tema, la navegación, las pantallas de base (hito 1) la base de datos local con Room y datos de ejemplo (hito 2) el login con ViewModel y validaciones (hito 3) y la lista y el detalle de OT con datos reales (hito 4): filtros por estado, tarjeta de próxima visita, línea de progreso y aceptar una OT. El formulario de login y el resto de las funciones llegan en los hitos siguientes.
+> **Estado:** en desarrollo. Hoy están la estructura, el tema, la navegación, las pantallas de base (hito 1) la base de datos local con Room y datos de ejemplo (hito 2) el login con ViewModel y validaciones (hito 3) y la lista y el detalle de OT con datos reales (hito 4): filtros por estado, tarjeta de próxima visita, línea de progreso y aceptar una OT. Además, el formulario para crear y editar OT (hito 5) con validación por campo, equipo filtrado por local, calendario y reloj de Material 3. El formulario de login y el resto de las funciones llegan en los hitos siguientes.
 
 ## Cómo correrla
 

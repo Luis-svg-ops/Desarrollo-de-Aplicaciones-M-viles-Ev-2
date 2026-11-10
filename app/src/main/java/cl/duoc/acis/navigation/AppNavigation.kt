@@ -44,6 +44,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import cl.duoc.acis.data.AppDatabase
 import cl.duoc.acis.model.Rol
+import cl.duoc.acis.repository.EquipoRepository
+import cl.duoc.acis.repository.LocalRepository
 import cl.duoc.acis.repository.OrdenTrabajoRepository
 import cl.duoc.acis.repository.UsuarioRepository
 import cl.duoc.acis.view.DetalleOtScreen
@@ -58,6 +60,7 @@ import cl.duoc.acis.view.PerfilScreen
 import cl.duoc.acis.viewmodel.DetalleOtViewModel
 import cl.duoc.acis.viewmodel.ListaOtViewModel
 import cl.duoc.acis.viewmodel.LoginViewModel
+import cl.duoc.acis.viewmodel.OtFormViewModel
 
 /**
  * Fábrica de ViewModels (el mismo Factory del ejemplo del curso, escrito una sola vez).
@@ -78,6 +81,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     val database = remember { AppDatabase.getDatabase(context) }
     val usuarioRepository = remember { UsuarioRepository(database.usuarioDao()) }
     val ordenTrabajoRepository = remember { OrdenTrabajoRepository(database.ordenTrabajoDao()) }
+    val localRepository = remember { LocalRepository(database.localDao()) }
+    val equipoRepository = remember { EquipoRepository(database.equipoDao(), database.ordenTrabajoDao()) }
 
     // Sesión: quién inició sesión y con qué rol. Sobrevive a la rotación de pantalla.
     var rol by rememberSaveable { mutableStateOf<Rol?>(null) }
@@ -201,7 +206,12 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 arguments = listOf(navArgument("otId") { type = NavType.LongType; defaultValue = -1L })
             ) { backStack ->
                 val otId = backStack.arguments?.getLong("otId")?.takeIf { it > 0 }
-                OtFormScreen(otId = otId, onVolver = { navController.popBackStack() })
+                val formViewModel: OtFormViewModel = viewModel(
+                    factory = fabrica {
+                        OtFormViewModel(ordenTrabajoRepository, localRepository, equipoRepository, usuarioRepository, otId)
+                    }
+                )
+                OtFormScreen(viewModel = formViewModel, onVolver = { navController.popBackStack() })
             }
             composable(
                 Rutas.Diagnostico.route,

@@ -1,5 +1,7 @@
 package cl.duoc.acis.util
 
+import java.time.LocalDate
+
 // Validaciones reutilizables (mismo estilo que ValidarRut del ejemplo del curso).
 // Cada función devuelve el mensaje de error, o null si el valor es válido.
 // No dependen de Android, así que se pueden probar con tests simples.
@@ -16,4 +18,24 @@ fun validarPassword(password: String): String? = when {
     password.isEmpty() -> "Ingresa tu contraseña"
     password.length < 6 -> "Debe tener al menos 6 caracteres"
     else -> null
+}
+
+/** Para listas desplegables obligatorias (local, equipo). */
+fun validarSeleccion(valor: Any?, mensaje: String): String? = if (valor == null) mensaje else null
+
+/** La fecha programada es obligatoria y no puede ser anterior a hoy. */
+fun validarFechaProgramada(fecha: LocalDate?, hoy: LocalDate = LocalDate.now()): String? = when {
+    fecha == null -> "Selecciona una fecha"
+    fecha.isBefore(hoy) -> "La fecha no puede ser anterior a hoy"
+    else -> null
+}
+
+/** Descripción del trabajo: entre 10 y 300 caracteres. */
+fun validarDescripcion(texto: String): String? {
+    val largo = texto.trim().length
+    return when {
+        largo < 10 -> "Mínimo 10 caracteres (llevas $largo)"
+        texto.length > 300 -> "Máximo 300 caracteres"
+        else -> null
+    }
 }
