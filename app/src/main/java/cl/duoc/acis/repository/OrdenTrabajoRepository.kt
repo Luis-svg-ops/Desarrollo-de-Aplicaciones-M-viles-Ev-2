@@ -1,6 +1,10 @@
 package cl.duoc.acis.repository
 
 import cl.duoc.acis.data.EquipoDao
+import cl.duoc.acis.data.EventoDao
+import cl.duoc.acis.data.UsuarioDao
+import cl.duoc.acis.model.EstadoOT
+import cl.duoc.acis.model.EventoOT
 import cl.duoc.acis.data.OrdenTrabajoDao
 import cl.duoc.acis.model.AccionOT
 import cl.duoc.acis.model.MaquinaEstadosOT
@@ -14,8 +18,37 @@ import java.time.LocalDate
 class OrdenTrabajoRepository(
     private val ordenTrabajoDao: OrdenTrabajoDao,
     // Para actualizar la última mantención del equipo al cerrar una OT
-    private val equipoDao: EquipoDao
+    private val equipoDao: EquipoDao,
+    // Historial de cambios de cada OT y nombres de quién los hizo
+    private val eventoDao: EventoDao,
+    private val usuarioDao: UsuarioDao
 ) {
+
+    /** Línea de tiempo de la OT: qué pasó, cuándo y quién. */
+    fun getHistorial(otId: Long): Flow<List<EventoOT>> = eventoDao.getByOt(otId)
+
+    private suspend fun registrar(otId: Long, estado: EstadoOT, descripcion: String) =
+        eventoDao.insert(EventoOT(otId = otId, estado = estado, descripcion = descripcion, fecha = System.currentTimeMillis()))
+
+    private suspend fun nombre(usuarioId: Long?): String =
+        usuarioId?.let { usuarioDao.getById(it)?.nombre } ?: "sin técnico"
+
+    /** Texto del historial para cada acción ("Rechazada por Pedro Soto: Fuera de mi zona"). */
+    private fun describir(accion: AccionOT, quien: String, motivo: String?): String {
+        val conMotivo = motivo?.let { ": $it" } ?: ""
+        return when (accion) {
+            AccionOT.ACEPTAR -> "Aceptada por $quien"
+            AccionOT.RECHAZAR -> "Rechazada por $quien$conMotivo"
+            AccionOT.CHECK_IN -> "Check-in de $quien en el local"
+            AccionOT.VISITA_FALLIDA -> "Visita fallida$conMotivo"
+            AccionOT.CERRAR -> "Trabajo terminado por $quien (diagnóstico y foto)"
+            AccionOT.CONFORMIDAD -> "Conformidad de la jefatura"
+            AccionOT.DISCONFORMIDAD -> "Disconformidad de la jefatura$conMotivo"
+            AccionOT.POSTERGAR -> "Postergada$conMotivo"
+            AccionOT.CANCELAR -> "Cancelada$conMotivo"
+            AccionOT.ASIGNAR, AccionOT.QUITAR_TECNICO -> accion.texto
+        }
+    }
 
     /** El Jefe ve todas las OT; el Técnico, solo las que tiene asignadas. */
     fun getParaUsuario(usuarioId: Long, rol: Rol, localId: Long? = null): Flow<List<OtConDetalle>> = when (rol) {
@@ -44,6 +77,8 @@ class OrdenTrabajoRepository(
         val id = ordenTrabajoDao.insert(ot)
         val numero = "OT-%d-%04d".format(LocalDate.now().year, 100 + id)
         ordenTrabajoDao.update(ot.copy(id = id, numero = numero))
+        registrar(id, EstadoOT.CREADA, "Creada por la jefatura")
+        if (ot.tecnicoId != null) registrar(id, EstadoOT.ASIGNADA, "Asignada a ${nombre(ot.tecnicoId)}")
         return id
     }
 
@@ -66,6 +101,15 @@ class OrdenTrabajoRepository(
                 // Reasignada o sin técnico: el (nuevo) técnico tiene que volver a aceptarla
                 fechaAceptacion = if (nuevoEstado != actual.estado) null else actual.fechaAceptacion
             )
+        )
+        registrar(
+            ot.id, nuevoEstado,
+            when {
+                nuevoEstado == EstadoOT.CREADA && actual.estado != EstadoOT.CREADA -> "Técnico quitado por la jefatura"
+                nuevoEstado == EstadoOT.ASIGNADA && ot.tecnicoId != actual.tecnicoId -> "Asignada a ${nombre(ot.tecnicoId)}"
+                nuevoEstado != actual.estado -> "Reprogramada para ${nombre(ot.tecnicoId)}"
+                else -> "Datos editados por la jefatura"
+            }
         )
         return null
     }
@@ -93,6 +137,7 @@ class OrdenTrabajoRepository(
             fechaAceptacion = if (accion == AccionOT.ACEPTAR) System.currentTimeMillis() else actual.fechaAceptacion
         )
         ordenTrabajoDao.update(datos(cambiada))
+        registrar(otId, accion.hacia, describir(accion, nombre(usuarioId), motivo))
         return null
     }
 

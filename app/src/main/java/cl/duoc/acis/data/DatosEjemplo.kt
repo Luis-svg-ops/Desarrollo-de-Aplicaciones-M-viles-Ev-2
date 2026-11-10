@@ -1,5 +1,6 @@
 package cl.duoc.acis.data
 
+import cl.duoc.acis.model.EventoOT
 import cl.duoc.acis.model.EstadoOT
 import cl.duoc.acis.model.Equipo
 import cl.duoc.acis.model.Local
@@ -103,6 +104,20 @@ object DatosEjemplo {
         db.usuarioDao().insertAll(usuarios)
         db.localDao().insertAll(locales)
         db.equipoDao().insertAll(equipos())
-        db.ordenTrabajoDao().insertAll(ordenes())
+        val ots = ordenes()
+        db.ordenTrabajoDao().insertAll(ots)
+        // Historial inicial de las OT de ejemplo: cuándo se crearon y en qué estado quedaron
+        db.eventoDao().insertAll(ots.flatMap { ot ->
+            val creada = EventoOT(otId = ot.id, estado = EstadoOT.CREADA, descripcion = "Creada por la jefatura", fecha = ot.fechaCreacion)
+            if (ot.estado == EstadoOT.CREADA) listOf(creada)
+            else listOf(
+                creada,
+                EventoOT(
+                    otId = ot.id, estado = ot.estado,
+                    descripcion = ot.estado.texto + (ot.motivo?.let { ": $it" } ?: ""),
+                    fecha = ot.checkOutFechaHora ?: ot.checkInFechaHora ?: ot.fechaAceptacion ?: ot.fechaCreacion
+                )
+            )
+        })
     }
 }

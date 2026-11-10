@@ -48,7 +48,7 @@ class RutasOtTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).build()
         DatosEjemplo.cargar(db)
-        repo = OrdenTrabajoRepository(db.ordenTrabajoDao(), db.equipoDao())
+        repo = OrdenTrabajoRepository(db.ordenTrabajoDao(), db.equipoDao(), db.eventoDao(), db.usuarioDao())
     }
 
     @After
@@ -138,6 +138,22 @@ class RutasOtTest {
         Rol.entries.forEach { assertTrue("$it no debe tener botones", botones(it, id).isEmpty()) }
         assertFalse(MaquinaEstadosOT.sePuedeEditar(estado(id)))
         assertTrue("El cliente ve el resultado final", ve(cliente, Rol.CLIENTE, id))
+
+        // 9. Historial: cada paso quedó registrado, en orden y con quién lo hizo
+        val historial = repo.getHistorial(id).first().map { it.descripcion }
+        assertEquals(
+            listOf(
+                "Creada por la jefatura",
+                "Asignada a Pedro Soto",
+                "Aceptada por Pedro Soto",
+                "Check-in de Pedro Soto en el local",
+                "Trabajo terminado por Pedro Soto (diagnóstico y foto)",
+                "Disconformidad de la jefatura: Trabajo incompleto",
+                "Trabajo terminado por Pedro Soto (diagnóstico y foto)",
+                "Conformidad de la jefatura"
+            ),
+            historial
+        )
     }
 
     // ---- Ruta 2: el técnico rechaza y el jefe reasigna ----

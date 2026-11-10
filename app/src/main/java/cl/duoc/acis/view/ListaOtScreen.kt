@@ -133,7 +133,7 @@ fun ListaOtScreen(
                     // Animación 2: al cambiar de filtro, las tarjetas entran, salen y se reordenan suavemente
                     // (por eso cada tarjeta tiene una key: así Compose sabe cuál es cuál)
                     Box(Modifier.animateItem()) {
-                        TarjetaOt(item = item, mostrarTecnico = esJefe || esCliente, onClick = { onVerOt(item.ot.id) })
+                        TarjetaOt(item = item, mostrarTecnico = esJefe || esCliente, onClick = { onVerOt(item.ot.id) }, paraCliente = esCliente)
                     }
                 }
             }

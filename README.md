@@ -27,6 +27,9 @@ Hecha con Kotlin, Jetpack Compose y Material 3. Los datos se guardan en el celul
 
 **Cliente (administrador de un local)**
 - Solo consulta: ve el avance de las OT de su local (estado, técnico, check-in, diagnóstico y foto), sin poder modificarlas.
+- Mientras la jefatura revisa una OT cerrada, la ve como **"En revisión"**.
+
+**Para todos:** cada OT tiene un **historial** con cada cambio, quién lo hizo y cuándo.
 
 ## Cómo cumple la rúbrica
 
@@ -36,7 +39,7 @@ Hecha con Kotlin, Jetpack Compose y Material 3. Los datos se guardan en el celul
 | Formularios validados | Login, crear/editar OT, diagnóstico y equipo: error por campo con ícono, botón activo solo si todo es válido (`util/Validaciones.kt`) |
 | Navegación funcional | Navigation Compose con rutas en una `sealed class` y barra inferior según el rol (`navigation/`) |
 | Gestión de estado | MVVM: un ViewModel por pantalla con `StateFlow` y `mutableStateOf` (`viewmodel/`) |
-| Almacenamiento local | Room con 4 tablas, llaves foráneas y datos de ejemplo (`data/`, `model/`) |
+| Almacenamiento local | Room con 5 tablas (incluye el historial de cada OT), llaves foráneas y datos de ejemplo (`data/`, `model/`) |
 | Recursos nativos (2) | **GPS** para el check-in y **cámara** para la foto de evidencia, con permisos en tiempo de ejecución |
 | Animaciones | Transiciones entre pantallas, lista animada al filtrar, cambio de estado, línea de progreso y logo (`view/components/Animaciones.kt`) |
 
@@ -101,7 +104,7 @@ app/src/main/java/cl/duoc/acis/
 
 ## Tests
 
-44 tests unitarios en `app/src/test`, que corren sin emulador:
+45 tests unitarios en `app/src/test`, que corren sin emulador:
 
 - `MaquinaEstadosOTTest` (21): rutas permitidas y prohibidas de la OT, conformidad, cliente sin acciones, estados finales, ningún estado huérfano y que el formulario de edición nunca invente una ruta.
 - `ValidacionesTest` (14): correo, contraseña, fechas, descripción, diagnóstico, foto y datos del equipo.

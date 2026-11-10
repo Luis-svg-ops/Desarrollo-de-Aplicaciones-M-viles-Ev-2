@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cl.duoc.acis.model.AccionOT
 import cl.duoc.acis.model.EstadoOT
+import cl.duoc.acis.model.EventoOT
 import cl.duoc.acis.model.MaquinaEstadosOT
 import cl.duoc.acis.model.OrdenTrabajo
 import cl.duoc.acis.model.OtConDetalle
@@ -53,6 +54,12 @@ class DetalleOtViewModel(
             else MaquinaEstadosOT.accionesDisponibles(d.ot.estado, rol).filter { !it.enFormulario }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Línea de tiempo de la OT (se actualiza sola con cada cambio)
+    val historial: StateFlow<List<EventoOT>> = repository.getHistorial(otId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val esCliente = rol == Rol.CLIENTE
 
     val puedeEditar: StateFlow<Boolean> = detalle
         .map { d -> rol == Rol.JEFE && d != null && MaquinaEstadosOT.sePuedeEditar(d.ot.estado) }
