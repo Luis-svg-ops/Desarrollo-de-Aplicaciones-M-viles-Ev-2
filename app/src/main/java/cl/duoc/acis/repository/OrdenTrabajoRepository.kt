@@ -81,4 +81,22 @@ class OrdenTrabajoRepository(private val ordenTrabajoDao: OrdenTrabajoDao) {
         aplicar(otId, AccionOT.CHECK_IN, Rol.TECNICO, usuarioId) {
             it.copy(checkInFechaHora = System.currentTimeMillis(), checkInLat = lat, checkInLon = lon)
         }
+
+    /** Check-out: cierra la OT con el diagnóstico, la foto y la hora real de término. */
+    suspend fun cerrar(
+        otId: Long,
+        usuarioId: Long,
+        diagnostico: String,
+        actividades: String,
+        materiales: String,
+        fotoUri: String
+    ): String? = aplicar(otId, AccionOT.CERRAR, Rol.TECNICO, usuarioId) {
+        it.copy(
+            checkOutFechaHora = System.currentTimeMillis(),
+            diagnostico = diagnostico,
+            actividadesRealizadas = actividades,
+            materialesUtilizados = materiales.ifBlank { null },
+            fotoUri = fotoUri
+        )
+    }
 }

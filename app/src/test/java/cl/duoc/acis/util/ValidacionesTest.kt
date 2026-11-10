@@ -52,4 +52,25 @@ class ValidacionesTest {
         assertEquals("Máximo 300 caracteres", validarDescripcion("a".repeat(301)))
         assertNull(validarDescripcion("Revisar presión del chiller"))
     }
+
+    @Test
+    fun diagnosticoVacioDaError() {
+        assertEquals("Ingresa el diagnóstico", validarTextoCierre("  ", "el diagnóstico"))
+    }
+
+    @Test
+    fun diagnosticoCortoDaError() {
+        assertEquals("Mínimo 10 caracteres (llevas 4)", validarTextoCierre("ruid", "el diagnóstico"))
+    }
+
+    @Test
+    fun diagnosticoValidoNoDaError() {
+        assertNull(validarTextoCierre("Filtro saturado, se reemplazó", "el diagnóstico"))
+    }
+
+    @Test
+    fun sinFotoNoSePuedeCerrar() {
+        assertEquals("Toma una foto del equipo", validarFoto(null))
+        assertNull(validarFoto("content://cl.duoc.acis.fotos/fotos/ot_1.jpg"))
+    }
 }
