@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [Usuario::class, Local::class, Equipo::class, OrdenTrabajo::class],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -28,6 +28,12 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
+        private fun cargarDatosEjemplo() {
+            CoroutineScope(Dispatchers.IO).launch {
+                INSTANCE?.let { DatosEjemplo.cargar(it) }
+            }
+        }
+
         // Una sola instancia de la base para toda la app (igual que el ejemplo del curso)
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -38,13 +44,17 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     // Mientras se desarrolla: si cambia una tabla, la base se recrea en vez de cerrarse la app
                     .fallbackToDestructiveMigration(dropAllTables = true)
-                    // La primera vez que se crea la base, se cargan los datos de ejemplo
+                    // Se cargan los datos de ejemplo la primera vez que se crea la base, y también si se
+                    // recreó por un cambio de versión (si no, quedaría vacía y nadie podría entrar)
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
-                            CoroutineScope(Dispatchers.IO).launch {
-                                INSTANCE?.let { DatosEjemplo.cargar(it) }
-                            }
+                            cargarDatosEjemplo()
+                        }
+
+                        override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
+                            super.onDestructiveMigration(db)
+                            cargarDatosEjemplo()
                         }
                     })
                     .build()

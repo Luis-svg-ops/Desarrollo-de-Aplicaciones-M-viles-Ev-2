@@ -56,19 +56,19 @@ object DatosEjemplo {
         ),
         OrdenTrabajo(
             id = 2, numero = "OT-2026-0102", localId = 2, equipoId = 3, tecnicoId = 1,
-            tipo = TipoOT.PREVENTIVA, prioridad = Prioridad.MEDIA, estado = EstadoOT.ACEPTADA,
+            tipo = TipoOT.PREVENTIVA, prioridad = Prioridad.MEDIA, estado = EstadoOT.ACEPTADA, fechaAceptacion = System.currentTimeMillis() - 3_600_000,
             descripcion = "Mantención preventiva trimestral del chiller: limpieza de serpentines y revisión de presiones.",
             fechaCreacion = fecha(-3, 9), fechaProgramada = fecha(0, 11, 30)
         ),
         OrdenTrabajo(
             id = 3, numero = "OT-2026-0103", localId = 3, equipoId = 5, tecnicoId = 1,
-            tipo = TipoOT.CORRECTIVA, prioridad = Prioridad.ALTA, estado = EstadoOT.ACEPTADA,
+            tipo = TipoOT.CORRECTIVA, prioridad = Prioridad.ALTA, estado = EstadoOT.ACEPTADA, fechaAceptacion = System.currentTimeMillis() - 3_600_000,
             descripcion = "Vitrina refrigerada no mantiene temperatura (marca 9 °C, debe estar bajo 5 °C).",
             fechaCreacion = fecha(-1, 15), fechaProgramada = fecha(0, 15)
         ),
         OrdenTrabajo(
             id = 4, numero = "OT-2026-0098", localId = 1, equipoId = 1, tecnicoId = 1,
-            tipo = TipoOT.PREVENTIVA, prioridad = Prioridad.BAJA, estado = EstadoOT.CERRADA,
+            tipo = TipoOT.PREVENTIVA, prioridad = Prioridad.BAJA, estado = EstadoOT.CERRADA, fechaAceptacion = System.currentTimeMillis() - 3_600_000,
             descripcion = "Revisión mensual cámara de frío.",
             fechaCreacion = fecha(-5, 9), fechaProgramada = fecha(-3, 10),
             checkInFechaHora = fecha(-3, 10, 6), checkOutFechaHora = fecha(-3, 10, 58),
@@ -84,7 +84,7 @@ object DatosEjemplo {
         ),
         OrdenTrabajo(
             id = 6, numero = "OT-2026-0099", localId = 3, equipoId = 6, tecnicoId = 3,
-            tipo = TipoOT.PREVENTIVA, prioridad = Prioridad.BAJA, estado = EstadoOT.VISITA_FALLIDA,
+            tipo = TipoOT.PREVENTIVA, prioridad = Prioridad.BAJA, estado = EstadoOT.VISITA_FALLIDA, fechaAceptacion = System.currentTimeMillis() - 3_600_000,
             descripcion = "Mantención preventiva split oficina gerencia.",
             fechaCreacion = fecha(-3, 9), fechaProgramada = fecha(-1, 16), motivo = "Local cerrado"
         ),

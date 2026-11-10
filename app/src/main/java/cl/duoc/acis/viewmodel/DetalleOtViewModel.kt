@@ -23,12 +23,13 @@ import kotlinx.coroutines.launch
 
 /**
  * Hasta qué paso normal llegó la OT (0 Asignada, 1 Aceptada, 2 En ejecución), para la línea de progreso.
- * Se deduce de los datos: si tiene check-in llegó a "En ejecución"; una visita fallida ocurre
- * después de aceptar; si tiene técnico, al menos estuvo asignada.
+ * Se deduce de los datos guardados: si tiene check-in llegó a "En ejecución"; si tiene fecha de
+ * aceptación (o es una visita fallida, que siempre ocurre después de aceptar) llegó a "Aceptada";
+ * si tiene técnico, al menos estuvo asignada.
  */
 fun pasoAlcanzado(ot: OrdenTrabajo): Int = when {
     ot.checkInFechaHora != null -> 2
-    ot.estado == EstadoOT.VISITA_FALLIDA -> 1
+    ot.fechaAceptacion != null || ot.estado == EstadoOT.VISITA_FALLIDA -> 1
     ot.tecnicoId != null -> 0
     else -> -1
 }
