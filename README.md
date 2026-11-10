@@ -1,13 +1,39 @@
 # ACIS OT Terreno
 
-App Android para gestionar órdenes de trabajo (OT) en terreno de ACIS Servicios Técnicos Ltda., empresa de mantenimiento de climatización y refrigeración comercial. Proyecto de la asignatura DSY1105 Desarrollo de Aplicaciones Móviles (Duoc UC), Evaluación Parcial 2.
+App Android para gestionar órdenes de trabajo (OT) en terreno de ACIS Servicios Técnicos Ltda., empresa de mantenimiento de climatización y refrigeración comercial.
 
-- **Técnico:** ve sus OT del día, hace check-in con GPS, registra el diagnóstico con foto de evidencia y hace el check-out.
-- **Jefe de mantenimiento:** crea, asigna y supervisa las OT, y administra locales y equipos.
+- **Autor:** Luis Roa Riquelme
+- **Asignatura:** DSY1105 Desarrollo de Aplicaciones Móviles, Duoc UC
+- **Evaluación:** Parcial 2 (encargo) y Parcial 3 (defensa)
 
 Hecha con Kotlin, Jetpack Compose y Material 3. Los datos se guardan en el celular con Room; no hay servidor.
 
-> **Estado:** en desarrollo. Hoy están la estructura, el tema, la navegación, las pantallas de base (hito 1) la base de datos local con Room y datos de ejemplo (hito 2) el login con ViewModel y validaciones (hito 3) y la lista y el detalle de OT con datos reales (hito 4): filtros por estado, tarjeta de próxima visita, línea de progreso y aceptar una OT. Además, el formulario para crear y editar OT (hito 5) con validación por campo, equipo filtrado por local, calendario y reloj de Material 3. Los cambios de estado (aceptar, rechazar, visita fallida, postergar, cancelar y reasignar) los controla una máquina de estados con tests. El check-in con GPS (hito 6) pide el permiso de ubicación en tiempo de ejecución y guarda hora y coordenadas. El diagnóstico con foto de evidencia y check-out (hito 7) pide el permiso de cámara y guarda la foto en la carpeta privada de la app. Las animaciones (hito 9) acompañan la navegación, los filtros, los cambios de estado y la línea de progreso. Los locales con su historial de OT y el CRUD de equipos (hito 8) completan la app; un equipo con OT no se borra, se da de baja. Lo que queda de las funciones llegan en los hitos siguientes.
+## Qué hace
+
+**Técnico**
+- Ve sus OT del día, con la próxima visita destacada y filtros (Pendientes, En ejecución, Cerradas).
+- Acepta o rechaza una OT asignada (el rechazo pide motivo).
+- Hace **check-in con GPS** al llegar al local: se guardan la hora y las coordenadas.
+- Registra una visita fallida si no pudo atender (con motivo).
+- Escribe el diagnóstico y las actividades, toma una **foto de evidencia** con la cámara y hace el **check-out**.
+- Consulta el historial de OT de cada local.
+
+**Jefe de mantenimiento**
+- Ve todas las OT con filtros (Todas, Sin asignar, En curso, Cerradas).
+- Crea, edita, asigna, reasigna, posterga y cancela OT.
+- Administra los equipos de cada local (crear, editar, eliminar o dar de baja) y ve su historial.
+
+## Cómo cumple la rúbrica
+
+| Requisito | Dónde está |
+|---|---|
+| Diseño visual coherente | Material 3, tema propio (`ui/theme`), componentes reutilizables (`view/components`) |
+| Formularios validados | Login, crear/editar OT, diagnóstico y equipo: error por campo con ícono, botón activo solo si todo es válido (`util/Validaciones.kt`) |
+| Navegación funcional | Navigation Compose con rutas en una `sealed class` y barra inferior según el rol (`navigation/`) |
+| Gestión de estado | MVVM: un ViewModel por pantalla con `StateFlow` y `mutableStateOf` (`viewmodel/`) |
+| Almacenamiento local | Room con 4 tablas, llaves foráneas y datos de ejemplo (`data/`, `model/`) |
+| Recursos nativos (2) | **GPS** para el check-in y **cámara** para la foto de evidencia, con permisos en tiempo de ejecución |
+| Animaciones | Transiciones entre pantallas, lista animada al filtrar, cambio de estado, línea de progreso y logo (`view/components/Animaciones.kt`) |
 
 ## Cómo correrla
 
@@ -15,17 +41,14 @@ Hecha con Kotlin, Jetpack Compose y Material 3. Los datos se guardan en el celul
 2. Esperar a que termine la sincronización de Gradle. La primera vez descarga dependencias, así que necesita internet.
 3. Elegir un emulador o un celular con Android 8.0 (API 26) o superior y presionar **Run**.
 
-Por consola también se puede compilar con:
+Por consola también se puede compilar y correr los tests:
 
 ```
 ./gradlew assembleDebug
+./gradlew testDebugUnitTest
 ```
 
 El APK queda en `app/build/outputs/apk/debug/`.
-
-## Probar el check-in en el emulador
-
-El emulador no tiene GPS físico: la ubicación se simula. Con el emulador abierto, en **⋯ (Extended controls) → Location**, buscar una dirección (por ejemplo "Av. Pajaritos 2450, Maipú") y presionar **Set location**. Luego, como técnico, abrir una OT aceptada y tocar **Hacer check-in**.
 
 ## Usuarios de prueba
 
@@ -35,6 +58,21 @@ El emulador no tiene GPS físico: la ubicación se simula. Con el emulador abier
 | Jefe de mantenimiento | jefe@acis.cl | 123456 |
 
 Los usuarios se cargan solos en la base de datos la primera vez que se abre la app. Las contraseñas están en texto plano porque es una demo local, sin servidor.
+
+## Probar los recursos nativos en el emulador
+
+**GPS (check-in):** el emulador no tiene GPS físico, así que la ubicación se simula. Con el emulador abierto, en **⋯ (Extended controls) → Location**, buscar una dirección (por ejemplo "Av. Pajaritos 2450, Maipú") y presionar **Set location**. Luego, como técnico, abrir una OT aceptada y tocar **Hacer check-in**.
+
+**Cámara (foto de evidencia):** el emulador trae una cámara virtual. Para usar la webcam del computador: Device Manager → editar el emulador → Show Advanced Settings → Camera → Back: **Webcam0**. Luego, con una OT en ejecución, tocar **Registrar diagnóstico y cerrar → Tomar foto**.
+
+En ambos casos la app primero explica para qué usa el permiso, después lo pide, y si se rechaza ofrece ir a Ajustes.
+
+## Reglas de negocio principales
+
+- **Máquina de estados de la OT** (`model/MaquinaEstadosOT.kt`): una tabla define desde qué estado se puede pasar a cuál, qué rol lo hace y si pide motivo. El repositorio la revisa contra el estado guardado antes de cada cambio, y la pantalla muestra solo los botones permitidos.
+- **Equipos:** un equipo con OT no se borra, se da de baja para conservar su historial.
+- **Fechas:** una OT no se programa en el pasado; la última mantención de un equipo no puede ser futura.
+- **Foto:** es obligatoria para cerrar una OT y se guarda en la carpeta privada de la app (no en la galería), mediante un `FileProvider`.
 
 ## Estructura
 
@@ -46,13 +84,19 @@ app/src/main/java/cl/duoc/acis/
 │                  y la máquina de estados de la OT (MaquinaEstadosOT)
 ├── data/          AppDatabase, DAOs (consultas) y datos de ejemplo
 ├── repository/    único punto de acceso a los datos para los ViewModel
+├── viewmodel/     lógica y estado de cada pantalla
 ├── navigation/    rutas (sealed class) y navegación con barra inferior
 ├── view/          pantallas (una por archivo)
-│   └── components/  piezas reutilizables (barra superior, logo, botones)
+│   └── components/  piezas reutilizables (campos validados, tarjetas, foto, animaciones)
+├── util/          validaciones, fechas, ubicación y fotos
 ├── ui/theme/      colores, tema y tipografía
 └── MainActivity.kt
 ```
 
-- `viewmodel/`: lógica y estado de cada pantalla (StateFlow).
-- `util/`: validaciones reutilizables, con tests en `app/src/test`.
-- `model/MaquinaEstadosOT.kt`: tabla de qué estado puede pasar a cuál, quién lo hace y si pide motivo. El repositorio la revisa antes de cada cambio y la pantalla muestra solo los botones permitidos. Tests en `app/src/test/.../model`.
+## Tests
+
+33 tests unitarios en `app/src/test`, que corren sin emulador:
+
+- `MaquinaEstadosOTTest` (18): rutas permitidas y prohibidas de la OT, estados finales, ningún estado huérfano y que el formulario de edición nunca invente una ruta.
+- `ValidacionesTest` (14): correo, contraseña, fechas, descripción, diagnóstico, foto y datos del equipo.
+- `UbicacionTest` (1): formato de las coordenadas.
