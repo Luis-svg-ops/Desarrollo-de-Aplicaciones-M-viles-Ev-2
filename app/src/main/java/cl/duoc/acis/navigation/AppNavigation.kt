@@ -72,6 +72,7 @@ import cl.duoc.acis.viewmodel.LocalesViewModel
 import cl.duoc.acis.viewmodel.ListaOtViewModel
 import cl.duoc.acis.viewmodel.LoginViewModel
 import cl.duoc.acis.viewmodel.OtFormViewModel
+import cl.duoc.acis.viewmodel.PerfilViewModel
 
 /**
  * Fábrica de ViewModels (el mismo Factory del ejemplo del curso, escrito una sola vez).
@@ -200,7 +201,10 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 LocalesScreen(viewModel = localesViewModel, esJefe = esJefe, onVerLocal = { navController.navigate(Rutas.Local.createRoute(it)) })
             }
             composable(Rutas.Perfil.route) {
-                PerfilScreen(rol = rol, onCerrarSesion = {
+                val perfilViewModel: PerfilViewModel = viewModel(
+                    factory = fabrica { PerfilViewModel(usuarioRepository, usuarioId) }
+                )
+                PerfilScreen(viewModel = perfilViewModel, onCerrarSesion = {
                     rol = null
                     usuarioId = 0L
                     navController.navigate(Rutas.Login.route) { popUpTo(0) { inclusive = true } }
