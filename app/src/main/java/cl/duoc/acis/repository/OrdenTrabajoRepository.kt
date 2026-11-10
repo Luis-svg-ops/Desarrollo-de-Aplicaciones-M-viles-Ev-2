@@ -1,11 +1,13 @@
 package cl.duoc.acis.repository
 
 import cl.duoc.acis.data.OrdenTrabajoDao
-import cl.duoc.acis.model.EstadoOT
+import cl.duoc.acis.model.AccionOT
+import cl.duoc.acis.model.MaquinaEstadosOT
 import cl.duoc.acis.model.OrdenTrabajo
 import cl.duoc.acis.model.OtConDetalle
 import cl.duoc.acis.model.Rol
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 
 class OrdenTrabajoRepository(private val ordenTrabajoDao: OrdenTrabajoDao) {
@@ -32,12 +34,36 @@ class OrdenTrabajoRepository(private val ordenTrabajoDao: OrdenTrabajoDao) {
         return id
     }
 
-    suspend fun actualizar(ot: OrdenTrabajo) = ordenTrabajoDao.update(ot)
-
-    /** El técnico acepta una OT asignada. Solo se puede aceptar si está ASIGNADA. */
-    suspend fun aceptar(ot: OrdenTrabajo) {
-        if (ot.estado == EstadoOT.ASIGNADA) {
-            ordenTrabajoDao.update(ot.copy(estado = EstadoOT.ACEPTADA))
+    /**
+     * Guarda los cambios del formulario de edición. El nuevo estado lo calcula la máquina de estados;
+     * si la OT ya no se puede editar (por ejemplo, se cerró mientras el Jefe la editaba), no se guarda.
+     * Devuelve el mensaje de error o null si se guardó.
+     */
+    suspend fun actualizar(ot: OrdenTrabajo): String? {
+        val actual = ordenTrabajoDao.getById(ot.id).first() ?: return "La OT ya no existe"
+        if (!MaquinaEstadosOT.sePuedeEditar(actual.estado)) {
+            return "Una OT ${actual.estado.texto.lowercase()} no se puede editar"
         }
+        val nuevoEstado = MaquinaEstadosOT.estadoAlEditar(actual.estado, actual.tecnicoId, ot.tecnicoId)
+        ordenTrabajoDao.update(
+            ot.copy(
+                estado = nuevoEstado,
+                // Al reasignar o reprogramar, el motivo anterior (rechazo, visita fallida...) ya no aplica
+                motivo = if (nuevoEstado != actual.estado) null else actual.motivo
+            )
+        )
+        return null
+    }
+
+    /**
+     * Único camino para cambiar el estado de una OT (aceptar, rechazar, postergar, cancelar...).
+     * Lee el estado actual desde Room y le pregunta a la máquina de estados si el cambio está
+     * permitido. Devuelve el mensaje de error o null si se guardó.
+     */
+    suspend fun aplicar(otId: Long, accion: AccionOT, rol: Rol, usuarioId: Long, motivo: String? = null): String? {
+        val actual = ordenTrabajoDao.getById(otId).first() ?: return "La OT ya no existe"
+        MaquinaEstadosOT.validar(accion, actual.estado, rol, motivo, actual.tecnicoId, usuarioId)?.let { return it }
+        ordenTrabajoDao.update(actual.copy(estado = accion.hacia, motivo = if (accion.pideMotivo) motivo else actual.motivo))
+        return null
     }
 }

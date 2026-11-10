@@ -13,26 +13,39 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import cl.duoc.acis.model.AccionOT
 import cl.duoc.acis.model.EstadoOT
 import cl.duoc.acis.model.OtConDetalle
 import cl.duoc.acis.util.fechaHoraCorta
 import cl.duoc.acis.view.components.AcisTopBar
 import cl.duoc.acis.view.components.EstadoTexto
+import cl.duoc.acis.view.components.iconoEstado
 import cl.duoc.acis.view.components.LineaProgreso
 import cl.duoc.acis.view.components.colorPrioridad
 import cl.duoc.acis.viewmodel.DetalleOtViewModel
@@ -41,14 +54,41 @@ import cl.duoc.acis.viewmodel.pasoAlcanzado
 @Composable
 fun DetalleOtScreen(
     viewModel: DetalleOtViewModel,
-    esJefe: Boolean,
     onVolver: () -> Unit,
     onEditar: () -> Unit,
     onDiagnostico: () -> Unit
 ) {
     val detalle by viewModel.detalle.collectAsState()
+    val acciones by viewModel.acciones.collectAsState()
+    val puedeEditar by viewModel.puedeEditar.collectAsState()
+    val accionConMotivo by viewModel.accionConMotivo.collectAsState()
+    val motivoError by viewModel.motivoError.collectAsState()
+    val mensaje by viewModel.mensaje.collectAsState()
+    val snackbar = remember { SnackbarHostState() }
 
-    Scaffold(topBar = { AcisTopBar(detalle?.ot?.numero ?: "Detalle de OT", onVolver = onVolver) }) { innerPadding ->
+    // Aviso del resultado de cada acción (o el error que devolvió la lógica)
+    LaunchedEffect(mensaje) {
+        mensaje?.let {
+            snackbar.showSnackbar(it)
+            viewModel.mensajeMostrado()
+        }
+    }
+
+    accionConMotivo?.let { accion ->
+        DialogoMotivo(
+            accion = accion,
+            elegido = viewModel.motivo,
+            error = motivoError,
+            onElegir = viewModel::onMotivoChange,
+            onConfirmar = viewModel::confirmarMotivo,
+            onCerrar = viewModel::cerrarDialogo
+        )
+    }
+
+    Scaffold(
+        topBar = { AcisTopBar(detalle?.ot?.numero ?: "Detalle de OT", onVolver = onVolver) },
+        snackbarHost = { SnackbarHost(snackbar) }
+    ) { innerPadding ->
         val item = detalle
         if (item == null) {
             // Mientras Room carga la OT
@@ -69,7 +109,7 @@ fun DetalleOtScreen(
             if (item.ot.motivo != null) Aviso("Motivo: ${item.ot.motivo}")
             Datos(item)
             if (item.ot.estado == EstadoOT.CERRADA) Cierre(item)
-            Acciones(item, esJefe, onAceptar = { viewModel.aceptar() }, onEditar = onEditar, onDiagnostico = onDiagnostico)
+            Acciones(item, acciones, puedeEditar, onAccion = viewModel::onAccion, onEditar = onEditar, onDiagnostico = onDiagnostico)
         }
     }
 }
@@ -133,28 +173,91 @@ private fun Cierre(item: OtConDetalle) {
     }
 }
 
-/** Botones según el rol y el estado de la OT. */
+/**
+ * Botones del detalle. No decide nada: muestra las acciones que entregó la máquina de estados.
+ */
 @Composable
 private fun Acciones(
     item: OtConDetalle,
-    esJefe: Boolean,
-    onAceptar: () -> Unit,
+    acciones: List<AccionOT>,
+    puedeEditar: Boolean,
+    onAccion: (AccionOT) -> Unit,
     onEditar: () -> Unit,
     onDiagnostico: () -> Unit
 ) {
-    val estado = item.ot.estado
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (!esJefe) {
-            when (estado) {
-                EstadoOT.ASIGNADA -> BotonGrande("Aceptar OT", onAceptar)
-                EstadoOT.ACEPTADA -> Aviso("El check-in con GPS se implementa en el hito 6.")
-                EstadoOT.EN_EJECUCION -> BotonGrande("Registrar diagnóstico y cerrar", onDiagnostico)
-                else -> Unit
+        acciones.forEach { accion ->
+            when (accion) {
+                AccionOT.ACEPTAR -> BotonGrande(accion.texto) { onAccion(accion) }
+                AccionOT.CHECK_IN -> Aviso("El check-in con GPS se implementa en el hito 6.")
+                AccionOT.CERRAR -> BotonGrande(accion.texto, onDiagnostico)
+                // Rechazar y cancelar se ven en rojo: sacan a la OT del camino normal
+                AccionOT.RECHAZAR, AccionOT.CANCELAR -> BotonContorno(accion.texto, peligro = true) { onAccion(accion) }
+                else -> BotonContorno(accion.texto) { onAccion(accion) }
             }
-        } else if (estado != EstadoOT.CERRADA && estado != EstadoOT.CANCELADA && estado != EstadoOT.EN_EJECUCION) {
-            OutlinedButton(onClick = onEditar, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("Editar OT") }
+        }
+        if (puedeEditar) {
+            val texto = when (item.ot.estado) {
+                EstadoOT.CREADA -> "Asignar técnico"
+                EstadoOT.RECHAZADA, EstadoOT.VISITA_FALLIDA, EstadoOT.POSTERGADA -> "Reasignar o reprogramar"
+                else -> "Editar OT"
+            }
+            BotonContorno(texto, onClick = onEditar)
         }
     }
+}
+
+@Composable
+private fun BotonContorno(texto: String, peligro: Boolean = false, onClick: () -> Unit) {
+    val color = if (peligro) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    OutlinedButton(
+        onClick = onClick,
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = color),
+        modifier = Modifier.fillMaxWidth().height(56.dp)
+    ) { Text(texto) }
+}
+
+/** Diálogo para elegir el motivo (los motivos vienen de la acción, no de la pantalla). */
+@Composable
+private fun DialogoMotivo(
+    accion: AccionOT,
+    elegido: String?,
+    error: String?,
+    onElegir: (String) -> Unit,
+    onConfirmar: () -> Unit,
+    onCerrar: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCerrar,
+        icon = { Icon(iconoEstado(accion.hacia), contentDescription = null) },
+        title = { Text(accion.texto) },
+        text = {
+            Column {
+                Text("Selecciona el motivo:", style = MaterialTheme.typography.bodyMedium)
+                accion.motivos.forEach { m ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .selectable(selected = m == elegido, onClick = { onElegir(m) }, role = Role.RadioButton)
+                    ) {
+                        RadioButton(selected = m == elegido, onClick = null)
+                        Text(m, modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+                if (error != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.Warning, contentDescription = "Error",
+                            tint = MaterialTheme.colorScheme.error, modifier = Modifier.padding(end = 4.dp))
+                        Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onConfirmar) { Text("Confirmar") } },
+        dismissButton = { TextButton(onClick = onCerrar) { Text("Volver") } }
+    )
 }
 
 @Composable

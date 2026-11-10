@@ -191,11 +191,10 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             ) { backStack ->
                 val otId = backStack.arguments?.getLong("otId") ?: 0L
                 val detalleViewModel: DetalleOtViewModel = viewModel(
-                    factory = fabrica { DetalleOtViewModel(ordenTrabajoRepository, otId) }
+                    factory = fabrica { DetalleOtViewModel(ordenTrabajoRepository, otId, rol ?: Rol.TECNICO, usuarioId) }
                 )
                 DetalleOtScreen(
                     viewModel = detalleViewModel,
-                    esJefe = esJefe,
                     onVolver = { navController.popBackStack() },
                     onEditar = { navController.navigate(Rutas.OtForm.createRoute(otId)) },
                     onDiagnostico = { navController.navigate(Rutas.Diagnostico.createRoute(otId)) }

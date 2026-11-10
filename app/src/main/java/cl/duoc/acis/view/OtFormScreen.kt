@@ -91,6 +91,15 @@ fun OtFormScreen(viewModel: OtFormViewModel, onVolver: () -> Unit) {
         }
     }
 
+    // Si la lógica rechazó el cambio, se avisa y se queda en el formulario
+    val errorGuardar by viewModel.errorGuardar.collectAsState()
+    LaunchedEffect(errorGuardar) {
+        errorGuardar?.let {
+            snackbar.showSnackbar(it)
+            viewModel.errorMostrado()
+        }
+    }
+
     Scaffold(
         topBar = { AcisTopBar(if (viewModel.esEdicion) "Editar OT" else "Nueva OT", onVolver = onVolver) },
         snackbarHost = { SnackbarHost(snackbar) }
