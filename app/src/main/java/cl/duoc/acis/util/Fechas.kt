@@ -28,3 +28,17 @@ fun fechaHoraCorta(millis: Long): String {
     val hora = Instant.ofEpochMilli(millis).atZone(ZONA).toLocalTime().format(HORA)
     return "$dia $hora"
 }
+
+/**
+ * Duración de la atención (check-out menos check-in), fácil de leer:
+ * "menos de 1 min", "45 min" o "1 h 20 min".
+ */
+fun formatoDuracion(milisegundos: Long): String {
+    val minutos = milisegundos / 60_000
+    return when {
+        minutos < 1 -> "menos de 1 min"
+        minutos < 60 -> "$minutos min"
+        minutos % 60 == 0L -> "${minutos / 60} h"
+        else -> "${minutos / 60} h ${minutos % 60} min"
+    }
+}

@@ -60,6 +60,7 @@ import cl.duoc.acis.model.AccionOT
 import cl.duoc.acis.model.EstadoOT
 import cl.duoc.acis.model.OtConDetalle
 import cl.duoc.acis.util.fechaHoraCorta
+import cl.duoc.acis.util.formatoDuracion
 import cl.duoc.acis.view.components.AcisTopBar
 import cl.duoc.acis.view.components.EstadoTexto
 import cl.duoc.acis.view.components.FotoEvidencia
@@ -268,7 +269,7 @@ private fun Cierre(item: OtConDetalle) {
         // Duración de la atención: diferencia entre check-out y check-in (base del SLA)
         val inicio = ot.checkInFechaHora
         val fin = ot.checkOutFechaHora
-        if (inicio != null && fin != null) Fila("Duración", "${(fin - inicio) / 60000} min")
+        if (inicio != null && fin != null) Fila("Duración", formatoDuracion(fin - inicio))
         ot.diagnostico?.let { Fila("Diagnóstico", it) }
         ot.actividadesRealizadas?.let { Fila("Actividades", it) }
         ot.materialesUtilizados?.let { Fila("Materiales", it) }
