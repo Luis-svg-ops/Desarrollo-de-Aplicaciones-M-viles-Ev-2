@@ -3,6 +3,7 @@ package cl.duoc.acis.util
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.LocalDate
 
 class ValidacionesTest {
 
@@ -29,5 +30,26 @@ class ValidacionesTest {
     @Test
     fun passwordValidaNoDaError() {
         assertNull(validarPassword("123456"))
+    }
+
+    @Test
+    fun seleccionVaciaDaError() {
+        assertEquals("Selecciona un local", validarSeleccion(null, "Selecciona un local"))
+        assertNull(validarSeleccion(1L, "Selecciona un local"))
+    }
+
+    @Test
+    fun fechaPasadaDaError() {
+        val hoy = LocalDate.of(2026, 11, 10)
+        assertEquals("La fecha no puede ser anterior a hoy", validarFechaProgramada(hoy.minusDays(1), hoy))
+        assertNull(validarFechaProgramada(hoy, hoy))
+        assertEquals("Selecciona una fecha", validarFechaProgramada(null, hoy))
+    }
+
+    @Test
+    fun descripcionCortaOLargaDaError() {
+        assertEquals("Mínimo 10 caracteres (llevas 5)", validarDescripcion("corto"))
+        assertEquals("Máximo 300 caracteres", validarDescripcion("a".repeat(301)))
+        assertNull(validarDescripcion("Revisar presión del chiller"))
     }
 }
