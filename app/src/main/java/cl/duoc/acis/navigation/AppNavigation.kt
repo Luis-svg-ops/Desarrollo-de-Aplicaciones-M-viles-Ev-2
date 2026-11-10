@@ -44,6 +44,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import cl.duoc.acis.data.AppDatabase
 import cl.duoc.acis.model.Rol
+import cl.duoc.acis.repository.OrdenTrabajoRepository
 import cl.duoc.acis.repository.UsuarioRepository
 import cl.duoc.acis.view.DetalleOtScreen
 import cl.duoc.acis.view.DiagnosticoScreen
@@ -54,7 +55,19 @@ import cl.duoc.acis.view.LoginScreen
 import cl.duoc.acis.view.OtFormScreen
 import cl.duoc.acis.view.ListaOtScreen
 import cl.duoc.acis.view.PerfilScreen
+import cl.duoc.acis.viewmodel.DetalleOtViewModel
+import cl.duoc.acis.viewmodel.ListaOtViewModel
 import cl.duoc.acis.viewmodel.LoginViewModel
+
+/**
+ * Fábrica de ViewModels (el mismo Factory del ejemplo del curso, escrito una sola vez).
+ * Android crea los ViewModel por su cuenta; esta "receta" le dice cómo construir cada uno
+ * con sus repositorios.
+ */
+private fun fabrica(crear: () -> ViewModel) = object : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T = crear() as T
+}
 
 private data class ItemBarra(val ruta: String, val texto: String, val icono: ImageVector)
 
@@ -64,6 +77,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     val context = LocalContext.current
     val database = remember { AppDatabase.getDatabase(context) }
     val usuarioRepository = remember { UsuarioRepository(database.usuarioDao()) }
+    val ordenTrabajoRepository = remember { OrdenTrabajoRepository(database.ordenTrabajoDao()) }
 
     // Sesión: quién inició sesión y con qué rol. Sobrevive a la rotación de pantalla.
     var rol by rememberSaveable { mutableStateOf<Rol?>(null) }
@@ -137,14 +151,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
         ) {
             composable(Rutas.Login.route) {
-                // Un ViewModel propio para esta pantalla. El Factory le entrega el repositorio
-                val loginViewModel: LoginViewModel = viewModel(
-                    factory = object : ViewModelProvider.Factory {
-                        @Suppress("UNCHECKED_CAST")
-                        override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                            LoginViewModel(usuarioRepository) as T
-                    }
-                )
+                // Un ViewModel propio para esta pantalla. La fábrica le entrega el repositorio
+                val loginViewModel: LoginViewModel = viewModel(factory = fabrica { LoginViewModel(usuarioRepository) })
                 LoginScreen(viewModel = loginViewModel, onLoginExitoso = { usuario ->
                     rol = usuario.rol
                     usuarioId = usuario.id
@@ -152,7 +160,11 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 })
             }
             composable(Rutas.Ots.route) {
+                val listaViewModel: ListaOtViewModel = viewModel(
+                    factory = fabrica { ListaOtViewModel(ordenTrabajoRepository, usuarioId, rol ?: Rol.TECNICO) }
+                )
                 ListaOtScreen(
+                    viewModel = listaViewModel,
                     esJefe = esJefe,
                     onVerOt = { navController.navigate(Rutas.DetalleOt.createRoute(it)) },
                     onNuevaOt = { navController.navigate(Rutas.OtForm.createRoute()) }
@@ -173,8 +185,11 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 arguments = listOf(navArgument("otId") { type = NavType.LongType })
             ) { backStack ->
                 val otId = backStack.arguments?.getLong("otId") ?: 0L
+                val detalleViewModel: DetalleOtViewModel = viewModel(
+                    factory = fabrica { DetalleOtViewModel(ordenTrabajoRepository, otId) }
+                )
                 DetalleOtScreen(
-                    otId = otId,
+                    viewModel = detalleViewModel,
                     esJefe = esJefe,
                     onVolver = { navController.popBackStack() },
                     onEditar = { navController.navigate(Rutas.OtForm.createRoute(otId)) },

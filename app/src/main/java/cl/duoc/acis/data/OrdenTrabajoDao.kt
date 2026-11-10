@@ -4,8 +4,10 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import cl.duoc.acis.model.OrdenTrabajo
+import cl.duoc.acis.model.OtConDetalle
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -24,6 +26,19 @@ interface OrdenTrabajoDao {
 
     @Query("SELECT * FROM ordenes_trabajo WHERE id = :id LIMIT 1")
     fun getById(id: Long): Flow<OrdenTrabajo?>
+
+    // Con detalle (local, equipo y técnico): @Transaction porque Room hace varias consultas juntas
+    @Transaction
+    @Query("SELECT * FROM ordenes_trabajo ORDER BY fechaProgramada")
+    fun getAllConDetalle(): Flow<List<OtConDetalle>>
+
+    @Transaction
+    @Query("SELECT * FROM ordenes_trabajo WHERE tecnicoId = :tecnicoId ORDER BY fechaProgramada")
+    fun getByTecnicoConDetalle(tecnicoId: Long): Flow<List<OtConDetalle>>
+
+    @Transaction
+    @Query("SELECT * FROM ordenes_trabajo WHERE id = :id LIMIT 1")
+    fun getConDetalle(id: Long): Flow<OtConDetalle?>
 
     // Para saber si un equipo tiene OT antes de borrarlo
     @Query("SELECT COUNT(*) FROM ordenes_trabajo WHERE equipoId = :equipoId")
