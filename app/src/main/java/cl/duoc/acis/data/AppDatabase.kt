@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import cl.duoc.acis.model.Equipo
+import cl.duoc.acis.model.EventoOT
 import cl.duoc.acis.model.Local
 import cl.duoc.acis.model.OrdenTrabajo
 import cl.duoc.acis.model.Usuario
@@ -14,8 +15,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [Usuario::class, Local::class, Equipo::class, OrdenTrabajo::class],
-    version = 4,
+    entities = [Usuario::class, Local::class, Equipo::class, OrdenTrabajo::class, EventoOT::class],
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -23,6 +24,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun localDao(): LocalDao
     abstract fun equipoDao(): EquipoDao
     abstract fun ordenTrabajoDao(): OrdenTrabajoDao
+    abstract fun eventoDao(): EventoDao
 
     companion object {
         @Volatile

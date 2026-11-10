@@ -29,7 +29,7 @@ import cl.duoc.acis.util.fechaHoraCorta
  * (rojo alta, amarillo media, verde baja), la prioridad también escrita y el estado como texto con ícono.
  */
 @Composable
-fun TarjetaOt(item: OtConDetalle, mostrarTecnico: Boolean, onClick: () -> Unit) {
+fun TarjetaOt(item: OtConDetalle, mostrarTecnico: Boolean, onClick: () -> Unit, paraCliente: Boolean = false) {
     val ot = item.ot
     val colorFranja = colorPrioridad(ot.prioridad)
     Card(
@@ -73,7 +73,7 @@ fun TarjetaOt(item: OtConDetalle, mostrarTecnico: Boolean, onClick: () -> Unit) 
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.weight(1f)
                     )
-                    EstadoTexto(ot.estado)
+                    EstadoTexto(ot.estado, paraCliente = paraCliente)
                 }
             }
         }

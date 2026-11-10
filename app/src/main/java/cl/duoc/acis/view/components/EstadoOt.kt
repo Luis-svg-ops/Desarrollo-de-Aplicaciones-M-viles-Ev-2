@@ -69,7 +69,7 @@ fun colorPrioridad(prioridad: Prioridad): Color = when (prioridad) {
 
 /** El estado como texto con ícono, sin recuadro (decisión del mockup). */
 @Composable
-fun EstadoTexto(estado: EstadoOT, modifier: Modifier = Modifier) {
+fun EstadoTexto(estado: EstadoOT, modifier: Modifier = Modifier, paraCliente: Boolean = false) {
     // Animación 4: al cambiar el estado (aceptar, check-in...) el color se transforma y el texto nuevo
     // sube mientras el anterior sale, para que el técnico note que su acción tuvo efecto
     val color by animateColorAsState(colorEstado(estado), tween(DURACION_NORMAL), label = "colorEstado")
@@ -84,7 +84,14 @@ fun EstadoTexto(estado: EstadoOT, modifier: Modifier = Modifier) {
     ) { actual ->
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Icon(iconoEstado(actual), contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
-            Text(actual.texto, color = color, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+            Text(textoEstado(actual, paraCliente), color = color, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
         }
     }
 }
+
+/**
+ * Para el cliente, una OT cerrada por el técnico todavía está "En revisión" por la jefatura:
+ * recién al dar la conformidad pasa a "Conforme".
+ */
+fun textoEstado(estado: EstadoOT, paraCliente: Boolean): String =
+    if (paraCliente && estado == EstadoOT.CERRADA) "En revisión" else estado.texto

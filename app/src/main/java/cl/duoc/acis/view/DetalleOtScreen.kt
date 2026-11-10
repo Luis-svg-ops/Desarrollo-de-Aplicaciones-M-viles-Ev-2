@@ -1,5 +1,9 @@
 package cl.duoc.acis.view
 
+import androidx.compose.foundation.layout.size
+import cl.duoc.acis.view.components.textoEstado
+import cl.duoc.acis.view.components.colorEstado
+import cl.duoc.acis.model.EventoOT
 import androidx.compose.animation.AnimatedVisibility
 import cl.duoc.acis.view.components.aparecer
 import cl.duoc.acis.view.components.desaparecer
@@ -84,6 +88,7 @@ fun DetalleOtScreen(
     val motivoError by viewModel.motivoError.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
     val buscandoUbicacion by viewModel.buscandoUbicacion.collectAsState()
+    val historial by viewModel.historial.collectAsState()
     val snackbar = remember { SnackbarHostState() }
 
     // ---- Permiso de ubicación para el check-in ----
@@ -173,7 +178,7 @@ fun DetalleOtScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Encabezado(item)
+            Encabezado(item, paraCliente = viewModel.esCliente)
             // Animación 3: el aviso de motivo y la tarjeta de check-in se despliegan cuando aparecen
             AnimatedVisibility(visible = item.ot.motivo != null, enter = aparecer, exit = desaparecer) {
                 Aviso("Motivo: ${item.ot.motivo ?: ""}")
@@ -185,6 +190,7 @@ fun DetalleOtScreen(
                 visible = !terminada && item.ot.checkInFechaHora != null,
                 enter = aparecer, exit = desaparecer
             ) { CheckIn(item) }
+            Historial(historial, paraCliente = viewModel.esCliente)
             Acciones(item, acciones, puedeEditar, buscandoUbicacion, onAccion = viewModel::onAccion,
                 onCheckIn = onCheckIn, onEditar = onEditar, onDiagnostico = onDiagnostico)
         }
@@ -192,11 +198,11 @@ fun DetalleOtScreen(
 }
 
 @Composable
-private fun Encabezado(item: OtConDetalle) {
+private fun Encabezado(item: OtConDetalle, paraCliente: Boolean) {
     val ot = item.ot
     TarjetaBlanca {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            EstadoTexto(ot.estado, modifier = Modifier.weight(1f))
+            EstadoTexto(ot.estado, modifier = Modifier.weight(1f), paraCliente = paraCliente)
             Text(
                 "Prioridad ${ot.prioridad.texto.lowercase()}",
                 color = colorPrioridad(ot.prioridad),
@@ -213,6 +219,29 @@ private fun Encabezado(item: OtConDetalle) {
         if (ot.estado == EstadoOT.CREADA) {
             Text("Aún sin técnico asignado", style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/** Línea de tiempo: cada cambio con su ícono, color, descripción y hora. */
+@Composable
+private fun Historial(eventos: List<EventoOT>, paraCliente: Boolean) {
+    if (eventos.isEmpty()) return
+    TarjetaBlanca {
+        Text("Historial", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 4.dp))
+        // El más reciente arriba: es lo primero que interesa
+        eventos.asReversed().forEach { e ->
+            Row(modifier = Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.Top) {
+                Icon(
+                    iconoEstado(e.estado), contentDescription = textoEstado(e.estado, paraCliente),
+                    tint = colorEstado(e.estado), modifier = Modifier.padding(top = 2.dp).size(18.dp)
+                )
+                Column(modifier = Modifier.padding(start = 10.dp)) {
+                    Text(e.descripcion, style = MaterialTheme.typography.bodyMedium)
+                    Text(fechaHoraCorta(e.fecha), style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         }
     }
 }
