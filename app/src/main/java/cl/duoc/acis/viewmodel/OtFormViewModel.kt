@@ -6,7 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cl.duoc.acis.model.EstadoOT
+import cl.duoc.acis.model.MaquinaEstadosOT
 import cl.duoc.acis.model.Equipo
 import cl.duoc.acis.model.Local
 import cl.duoc.acis.model.OrdenTrabajo
@@ -90,6 +90,14 @@ class OtFormViewModel(
     // Pasa a true cuando se guardó: la pantalla muestra el aviso y vuelve atrás
     private val _guardado = MutableStateFlow(false)
     val guardado: StateFlow<Boolean> = _guardado.asStateFlow()
+
+    // Error al guardar que viene de la lógica (por ejemplo, la OT se cerró mientras se editaba)
+    private val _errorGuardar = MutableStateFlow<String?>(null)
+    val errorGuardar: StateFlow<String?> = _errorGuardar.asStateFlow()
+
+    fun errorMostrado() {
+        _errorGuardar.value = null
+    }
 
     // ---- Listas para los desplegables (vienen de Room) ----
     val locales: StateFlow<List<Local>> = localRepository.getAll()
@@ -188,7 +196,7 @@ class OtFormViewModel(
             _cargando.value = true
             val base = original
             if (base == null) {
-                // OT nueva: si ya tiene técnico queda Asignada; si no, Creada
+                // OT nueva: si ya tiene técnico queda Asignada; si no, Creada (lo decide la máquina)
                 otRepository.crear(
                     OrdenTrabajo(
                         numero = "",
@@ -197,34 +205,30 @@ class OtFormViewModel(
                         tecnicoId = tecnicoId,
                         tipo = tipo,
                         prioridad = prioridad,
-                        estado = if (tecnicoId == null) EstadoOT.CREADA else EstadoOT.ASIGNADA,
+                        estado = MaquinaEstadosOT.estadoInicial(tecnicoId),
                         descripcion = descripcion.trim(),
                         fechaCreacion = System.currentTimeMillis(),
                         fechaProgramada = programada
                     )
                 )
             } else {
-                // Edición: si se cambia el técnico, o la OT estaba sin asignar o detenida, vuelve a Asignada
-                val estadosParaReasignar = setOf(EstadoOT.CREADA, EstadoOT.RECHAZADA, EstadoOT.VISITA_FALLIDA, EstadoOT.POSTERGADA)
-                val nuevoEstado = when {
-                    tecnicoId == null -> EstadoOT.CREADA
-                    tecnicoId != base.tecnicoId || base.estado in estadosParaReasignar -> EstadoOT.ASIGNADA
-                    else -> base.estado
-                }
-                otRepository.actualizar(
+                // Edición: el nuevo estado lo decide la máquina de estados (en el repositorio)
+                val error = otRepository.actualizar(
                     base.copy(
                         localId = local,
                         equipoId = equipo,
                         tecnicoId = tecnicoId,
                         tipo = tipo,
                         prioridad = prioridad,
-                        estado = nuevoEstado,
                         descripcion = descripcion.trim(),
-                        fechaProgramada = programada,
-                        // El motivo de la visita fallida o postergación ya no aplica al reprogramar
-                        motivo = if (nuevoEstado == EstadoOT.ASIGNADA && base.estado != EstadoOT.ASIGNADA) null else base.motivo
+                        fechaProgramada = programada
                     )
                 )
+                if (error != null) {
+                    _errorGuardar.value = error
+                    _cargando.value = false
+                    return@launch
+                }
             }
             _cargando.value = false
             _guardado.value = true
