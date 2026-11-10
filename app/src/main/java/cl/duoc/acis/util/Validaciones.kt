@@ -1,6 +1,8 @@
 package cl.duoc.acis.util
 
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 // Validaciones reutilizables (mismo estilo que ValidarRut del ejemplo del curso).
 // Cada función devuelve el mensaje de error, o null si el valor es válido.
@@ -64,3 +66,7 @@ fun validarObligatorio(texto: String, mensaje: String): String? = when {
 /** Última mantención: opcional, pero no puede ser una fecha futura. */
 fun validarFechaNoFutura(fecha: LocalDate?, hoy: LocalDate = LocalDate.now()): String? =
     if (fecha != null && fecha.isAfter(hoy)) "La fecha no puede ser futura" else null
+
+/** Si la OT es para hoy, la hora no puede haber pasado (no se programa una visita en el pasado). */
+fun validarHoraProgramada(fecha: LocalDate?, hora: LocalTime, ahora: LocalDateTime = LocalDateTime.now()): String? =
+    if (fecha == ahora.toLocalDate() && hora.isBefore(ahora.toLocalTime().withSecond(0).withNano(0))) "Esa hora ya pasó" else null
