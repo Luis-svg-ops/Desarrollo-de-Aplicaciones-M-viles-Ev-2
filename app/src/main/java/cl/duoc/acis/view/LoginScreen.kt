@@ -1,5 +1,10 @@
 package cl.duoc.acis.view
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -74,7 +79,16 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginExitoso: (Usuario) -> Unit) {
                     .padding(vertical = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                InsigniaMadre()
+                // Animación 6: al abrir la app, el logo aparece creciendo un poco (bienvenida, una sola vez)
+                val entrada = remember { Animatable(0f) }
+                LaunchedEffect(Unit) { entrada.animateTo(1f, tween(600)) }
+                InsigniaMadre(
+                    modifier = Modifier.graphicsLayer {
+                        alpha = entrada.value
+                        scaleX = 0.8f + 0.2f * entrada.value
+                        scaleY = 0.8f + 0.2f * entrada.value
+                    }
+                )
                 Spacer(Modifier.height(12.dp))
                 Text("ACIS OT Terreno", style = MaterialTheme.typography.headlineSmall, color = Color.White)
                 Text("Órdenes de trabajo en terreno", style = MaterialTheme.typography.bodyMedium, color = Color.White)

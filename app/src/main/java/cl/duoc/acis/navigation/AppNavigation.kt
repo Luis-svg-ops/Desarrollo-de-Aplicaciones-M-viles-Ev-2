@@ -1,5 +1,11 @@
 package cl.duoc.acis.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import cl.duoc.acis.view.components.DURACION_CORTA
+import cl.duoc.acis.view.components.DURACION_NORMAL
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -156,7 +162,13 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
         NavHost(
             navController = navController,
             startDestination = Rutas.Login.route,
-            modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
+            modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
+            // Animación 1: al avanzar, la pantalla nueva entra desde la derecha; al volver, desde la izquierda.
+            // Así el usuario "siente" si va más adentro (detalle) o vuelve atrás (lista)
+            enterTransition = { fadeIn(tween(DURACION_NORMAL)) + slideIntoContainer(SlideDirection.Start, tween(DURACION_NORMAL)) { it / 6 } },
+            exitTransition = { fadeOut(tween(DURACION_CORTA)) },
+            popEnterTransition = { fadeIn(tween(DURACION_NORMAL)) + slideIntoContainer(SlideDirection.End, tween(DURACION_NORMAL)) { it / 6 } },
+            popExitTransition = { fadeOut(tween(DURACION_CORTA)) }
         ) {
             composable(Rutas.Login.route) {
                 // Un ViewModel propio para esta pantalla. La fábrica le entrega el repositorio
