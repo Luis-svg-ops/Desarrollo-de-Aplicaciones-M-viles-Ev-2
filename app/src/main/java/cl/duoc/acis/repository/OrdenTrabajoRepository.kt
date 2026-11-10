@@ -19,6 +19,11 @@ class OrdenTrabajoRepository(private val ordenTrabajoDao: OrdenTrabajoDao) {
 
     fun getByLocal(localId: Long): Flow<List<OrdenTrabajo>> = ordenTrabajoDao.getByLocal(localId)
 
+    fun getTodas(): Flow<List<OrdenTrabajo>> = ordenTrabajoDao.getAll()
+
+    /** Historial de OT de un local, con su equipo y técnico. */
+    fun getHistorialLocal(localId: Long): Flow<List<OtConDetalle>> = ordenTrabajoDao.getByLocalConDetalle(localId)
+
     fun getDetalle(id: Long): Flow<OtConDetalle?> = ordenTrabajoDao.getConDetalle(id)
 
     fun getOt(id: Long): Flow<OrdenTrabajo?> = ordenTrabajoDao.getById(id)

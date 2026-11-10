@@ -66,6 +66,9 @@ import cl.duoc.acis.view.ListaOtScreen
 import cl.duoc.acis.view.PerfilScreen
 import cl.duoc.acis.viewmodel.DetalleOtViewModel
 import cl.duoc.acis.viewmodel.DiagnosticoViewModel
+import cl.duoc.acis.viewmodel.EquipoFormViewModel
+import cl.duoc.acis.viewmodel.LocalDetalleViewModel
+import cl.duoc.acis.viewmodel.LocalesViewModel
 import cl.duoc.acis.viewmodel.ListaOtViewModel
 import cl.duoc.acis.viewmodel.LoginViewModel
 import cl.duoc.acis.viewmodel.OtFormViewModel
@@ -191,7 +194,10 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 )
             }
             composable(Rutas.Locales.route) {
-                LocalesScreen(esJefe = esJefe, onVerLocal = { navController.navigate(Rutas.Local.createRoute(it)) })
+                val localesViewModel: LocalesViewModel = viewModel(
+                    factory = fabrica { LocalesViewModel(localRepository, ordenTrabajoRepository) }
+                )
+                LocalesScreen(viewModel = localesViewModel, esJefe = esJefe, onVerLocal = { navController.navigate(Rutas.Local.createRoute(it)) })
             }
             composable(Rutas.Perfil.route) {
                 PerfilScreen(rol = rol, onCerrarSesion = {
@@ -247,8 +253,11 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 arguments = listOf(navArgument("localId") { type = NavType.LongType })
             ) { backStack ->
                 val localId = backStack.arguments?.getLong("localId") ?: 0L
+                val localViewModel: LocalDetalleViewModel = viewModel(
+                    factory = fabrica { LocalDetalleViewModel(localRepository, equipoRepository, ordenTrabajoRepository, localId) }
+                )
                 LocalDetalleScreen(
-                    localId = localId,
+                    viewModel = localViewModel,
                     esJefe = esJefe,
                     onVolver = { navController.popBackStack() },
                     onVerOt = { navController.navigate(Rutas.DetalleOt.createRoute(it)) },
@@ -262,9 +271,13 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     navArgument("equipoId") { type = NavType.LongType; defaultValue = -1L }
                 )
             ) { backStack ->
+                val localId = backStack.arguments?.getLong("localId") ?: 0L
+                val equipoId = backStack.arguments?.getLong("equipoId")?.takeIf { it > 0 }
+                val equipoViewModel: EquipoFormViewModel = viewModel(
+                    factory = fabrica { EquipoFormViewModel(equipoRepository, localId, equipoId) }
+                )
                 EquipoFormScreen(
-                    localId = backStack.arguments?.getLong("localId") ?: 0L,
-                    equipoId = backStack.arguments?.getLong("equipoId")?.takeIf { it > 0 },
+                    viewModel = equipoViewModel,
                     onVolver = { navController.popBackStack() }
                 )
             }

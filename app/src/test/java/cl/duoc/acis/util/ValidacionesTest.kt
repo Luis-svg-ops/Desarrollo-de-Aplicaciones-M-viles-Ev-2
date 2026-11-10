@@ -73,4 +73,18 @@ class ValidacionesTest {
         assertEquals("Toma una foto del equipo", validarFoto(null))
         assertNull(validarFoto("content://cl.duoc.acis.fotos/fotos/ot_1.jpg"))
     }
+
+    @Test
+    fun marcaVaciaDaError() {
+        assertEquals("La marca es obligatoria", validarObligatorio("  ", "La marca es obligatoria"))
+        assertNull(validarObligatorio("Carrier", "La marca es obligatoria"))
+    }
+
+    @Test
+    fun ultimaMantencionNoPuedeSerFutura() {
+        val hoy = LocalDate.of(2026, 11, 10)
+        assertEquals("La fecha no puede ser futura", validarFechaNoFutura(hoy.plusDays(1), hoy))
+        assertNull(validarFechaNoFutura(hoy, hoy))
+        assertNull(validarFechaNoFutura(null, hoy)) // vacía = sin antecedentes, es válido
+    }
 }
