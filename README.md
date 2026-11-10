@@ -101,7 +101,7 @@ app/src/main/java/cl/duoc/acis/
 
 ## Tests
 
- tests unitarios en `app/src/test`, que corren sin emulador:
+43 tests unitarios en `app/src/test`, que corren sin emulador:
 
 - `MaquinaEstadosOTTest` (21): rutas permitidas y prohibidas de la OT, conformidad, cliente sin acciones, estados finales, ningún estado huérfano y que el formulario de edición nunca invente una ruta.
 - `ValidacionesTest` (14): correo, contraseña, fechas, descripción, diagnóstico, foto y datos del equipo.
