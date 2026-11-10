@@ -59,6 +59,7 @@ import cl.duoc.acis.model.OtConDetalle
 import cl.duoc.acis.util.fechaHoraCorta
 import cl.duoc.acis.view.components.AcisTopBar
 import cl.duoc.acis.view.components.EstadoTexto
+import cl.duoc.acis.view.components.FotoEvidencia
 import cl.duoc.acis.view.components.iconoEstado
 import cl.duoc.acis.view.components.LineaProgreso
 import cl.duoc.acis.view.components.colorPrioridad
@@ -262,6 +263,10 @@ private fun Cierre(item: OtConDetalle) {
         ot.diagnostico?.let { Fila("Diagnóstico", it) }
         ot.actividadesRealizadas?.let { Fila("Actividades", it) }
         ot.materialesUtilizados?.let { Fila("Materiales", it) }
+        ot.fotoUri?.let {
+            Text("Foto de evidencia", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
+            FotoEvidencia(it)
+        }
     }
 }
 

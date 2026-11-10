@@ -59,6 +59,7 @@ import cl.duoc.acis.view.OtFormScreen
 import cl.duoc.acis.view.ListaOtScreen
 import cl.duoc.acis.view.PerfilScreen
 import cl.duoc.acis.viewmodel.DetalleOtViewModel
+import cl.duoc.acis.viewmodel.DiagnosticoViewModel
 import cl.duoc.acis.viewmodel.ListaOtViewModel
 import cl.duoc.acis.viewmodel.LoginViewModel
 import cl.duoc.acis.viewmodel.OtFormViewModel
@@ -218,8 +219,12 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 Rutas.Diagnostico.route,
                 arguments = listOf(navArgument("otId") { type = NavType.LongType })
             ) { backStack ->
+                val otId = backStack.arguments?.getLong("otId") ?: 0L
+                val diagnosticoViewModel: DiagnosticoViewModel = viewModel(
+                    factory = fabrica { DiagnosticoViewModel(ordenTrabajoRepository, otId, usuarioId) }
+                )
                 DiagnosticoScreen(
-                    otId = backStack.arguments?.getLong("otId") ?: 0L,
+                    viewModel = diagnosticoViewModel,
                     onVolver = { navController.popBackStack() },
                     // Tras el check-out se vuelve a la lista sacando Diagnóstico y Detalle de la pila
                     onCheckOut = { navController.popBackStack(Rutas.Ots.route, inclusive = false) }

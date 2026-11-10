@@ -39,3 +39,17 @@ fun validarDescripcion(texto: String): String? {
         else -> null
     }
 }
+
+/** Texto obligatorio del cierre (diagnóstico, actividades): entre 10 y 500 caracteres. */
+fun validarTextoCierre(texto: String, campo: String): String? {
+    val largo = texto.trim().length
+    return when {
+        largo == 0 -> "Ingresa $campo"
+        largo < 10 -> "Mínimo 10 caracteres (llevas $largo)"
+        texto.length > 500 -> "Máximo 500 caracteres"
+        else -> null
+    }
+}
+
+/** La foto de evidencia es obligatoria para cerrar la OT. */
+fun validarFoto(uri: String?): String? = if (uri.isNullOrBlank()) "Toma una foto del equipo" else null
