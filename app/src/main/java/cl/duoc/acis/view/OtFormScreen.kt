@@ -73,6 +73,7 @@ fun OtFormScreen(viewModel: OtFormViewModel, onVolver: () -> Unit) {
     val localError by viewModel.localError.collectAsState()
     val equipoError by viewModel.equipoError.collectAsState()
     val fechaError by viewModel.fechaError.collectAsState()
+    val horaError by viewModel.horaError.collectAsState()
     val descripcionError by viewModel.descripcionError.collectAsState()
     val isButtonEnabled by viewModel.isButtonEnabled.collectAsState()
     val cargando by viewModel.cargando.collectAsState()
@@ -158,7 +159,7 @@ fun OtFormScreen(viewModel: OtFormViewModel, onVolver: () -> Unit) {
             CampoClicable(
                 valor = viewModel.hora.format(FORMATO_HORA),
                 etiqueta = "Hora",
-                error = null,
+                error = horaError,
                 icono = Icons.Filled.DateRange,
                 onClick = { mostrarHora = true }
             )

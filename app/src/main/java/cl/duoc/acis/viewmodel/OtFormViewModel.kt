@@ -19,6 +19,7 @@ import cl.duoc.acis.repository.OrdenTrabajoRepository
 import cl.duoc.acis.repository.UsuarioRepository
 import cl.duoc.acis.util.validarDescripcion
 import cl.duoc.acis.util.validarFechaProgramada
+import cl.duoc.acis.util.validarHoraProgramada
 import cl.duoc.acis.util.validarSeleccion
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +33,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 
@@ -61,9 +63,11 @@ class OtFormViewModel(
         private set
     var prioridad by mutableStateOf(Prioridad.MEDIA)
         private set
-    var fecha by mutableStateOf<LocalDate?>(LocalDate.now())
+    // Por defecto se propone la próxima hora en punto (si son las 11:05, las 12:00)
+    private val propuesta = LocalDateTime.now().plusHours(1).withMinute(0).withSecond(0).withNano(0)
+    var fecha by mutableStateOf<LocalDate?>(propuesta.toLocalDate())
         private set
-    var hora by mutableStateOf(LocalTime.of(9, 0))
+    var hora by mutableStateOf(propuesta.toLocalTime())
         private set
     var descripcion by mutableStateOf("")
         private set
@@ -77,6 +81,9 @@ class OtFormViewModel(
 
     private val _fechaError = MutableStateFlow<String?>(null)
     val fechaError: StateFlow<String?> = _fechaError.asStateFlow()
+
+    private val _horaError = MutableStateFlow<String?>(null)
+    val horaError: StateFlow<String?> = _horaError.asStateFlow()
 
     private val _descripcionError = MutableStateFlow<String?>(null)
     val descripcionError: StateFlow<String?> = _descripcionError.asStateFlow()
@@ -130,6 +137,7 @@ class OtFormViewModel(
                     descripcion = ot.descripcion
                     // Si la fecha original ya pasó (por ejemplo, una visita fallida), hay que reprogramar
                     _fechaError.value = validarFechaProgramada(fecha)
+                    _horaError.value = validarHoraProgramada(fecha, hora)
                     validate()
                 }
             }
@@ -164,11 +172,14 @@ class OtFormViewModel(
     fun onFechaChange(nueva: LocalDate) {
         fecha = nueva
         _fechaError.value = validarFechaProgramada(nueva)
+        _horaError.value = validarHoraProgramada(nueva, hora)
         validate()
     }
 
     fun onHoraChange(nueva: LocalTime) {
         hora = nueva
+        _horaError.value = validarHoraProgramada(fecha, nueva)
+        validate()
     }
 
     fun onDescripcionChange(nuevo: String) {
@@ -182,6 +193,7 @@ class OtFormViewModel(
         _isButtonEnabled.value = validarSeleccion(localId, "") == null &&
                 validarSeleccion(equipoId, "") == null &&
                 validarFechaProgramada(fecha) == null &&
+                validarHoraProgramada(fecha, hora) == null &&
                 validarDescripcion(descripcion) == null
     }
 

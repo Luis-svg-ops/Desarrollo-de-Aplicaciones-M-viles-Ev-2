@@ -87,4 +87,12 @@ class ValidacionesTest {
         assertNull(validarFechaNoFutura(hoy, hoy))
         assertNull(validarFechaNoFutura(null, hoy)) // vacía = sin antecedentes, es válido
     }
+
+    @Test
+    fun horaPasadaDeHoyDaError() {
+        val ahora = java.time.LocalDateTime.of(2026, 11, 10, 11, 5)
+        assertEquals("Esa hora ya pasó", validarHoraProgramada(ahora.toLocalDate(), java.time.LocalTime.of(9, 0), ahora))
+        assertNull(validarHoraProgramada(ahora.toLocalDate(), java.time.LocalTime.of(12, 0), ahora))
+        assertNull("Mañana a las 9 sí se puede", validarHoraProgramada(ahora.toLocalDate().plusDays(1), java.time.LocalTime.of(9, 0), ahora))
+    }
 }
