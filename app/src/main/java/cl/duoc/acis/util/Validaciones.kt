@@ -53,3 +53,14 @@ fun validarTextoCierre(texto: String, campo: String): String? {
 
 /** La foto de evidencia es obligatoria para cerrar la OT. */
 fun validarFoto(uri: String?): String? = if (uri.isNullOrBlank()) "Toma una foto del equipo" else null
+
+/** Texto obligatorio corto (marca, modelo): no vacío y hasta 40 caracteres. */
+fun validarObligatorio(texto: String, mensaje: String): String? = when {
+    texto.isBlank() -> mensaje
+    texto.length > 40 -> "Máximo 40 caracteres"
+    else -> null
+}
+
+/** Última mantención: opcional, pero no puede ser una fecha futura. */
+fun validarFechaNoFutura(fecha: LocalDate?, hoy: LocalDate = LocalDate.now()): String? =
+    if (fecha != null && fecha.isAfter(hoy)) "La fecha no puede ser futura" else null

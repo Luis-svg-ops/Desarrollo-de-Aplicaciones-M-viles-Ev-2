@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import cl.duoc.acis.model.Prioridad
 import cl.duoc.acis.model.TipoOT
 import cl.duoc.acis.view.components.AcisTopBar
+import cl.duoc.acis.view.components.Opciones
 import cl.duoc.acis.view.components.CampoClicable
 import cl.duoc.acis.view.components.CampoSeleccion
 import cl.duoc.acis.view.components.CampoValidado
@@ -226,23 +227,5 @@ fun OtFormScreen(viewModel: OtFormViewModel, onVolver: () -> Unit) {
             dismissButton = { TextButton(onClick = { mostrarHora = false }) { Text("Cancelar") } },
             text = { TimePicker(state = estado) }
         )
-    }
-}
-
-/** Fila de chips de 48 dp para elegir una opción (tipo o prioridad). */
-@Composable
-private fun <T> Opciones(opciones: List<T>, seleccion: T, texto: (T) -> String, onElegir: (T) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        opciones.forEach { opcion ->
-            FilterChip(
-                selected = opcion == seleccion,
-                onClick = { onElegir(opcion) },
-                label = { Text(texto(opcion)) },
-                leadingIcon = if (opcion == seleccion) {
-                    { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                } else null,
-                modifier = Modifier.height(48.dp)
-            )
-        }
     }
 }

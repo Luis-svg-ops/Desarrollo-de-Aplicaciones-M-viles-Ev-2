@@ -32,6 +32,11 @@ interface OrdenTrabajoDao {
     @Query("SELECT * FROM ordenes_trabajo ORDER BY fechaProgramada")
     fun getAllConDetalle(): Flow<List<OtConDetalle>>
 
+    // Historial de un local: las más recientes primero
+    @Transaction
+    @Query("SELECT * FROM ordenes_trabajo WHERE localId = :localId ORDER BY fechaProgramada DESC")
+    fun getByLocalConDetalle(localId: Long): Flow<List<OtConDetalle>>
+
     @Transaction
     @Query("SELECT * FROM ordenes_trabajo WHERE tecnicoId = :tecnicoId ORDER BY fechaProgramada")
     fun getByTecnicoConDetalle(tecnicoId: Long): Flow<List<OtConDetalle>>

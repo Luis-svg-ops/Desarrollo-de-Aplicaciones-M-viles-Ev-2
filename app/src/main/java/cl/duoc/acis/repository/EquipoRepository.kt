@@ -13,6 +13,9 @@ class EquipoRepository(
 
     suspend fun getById(id: Long): Equipo? = equipoDao.getById(id)
 
+    /** Si tiene OT, al "eliminarlo" se da de baja (la pantalla cambia el texto del botón). */
+    suspend fun tieneOt(id: Long): Boolean = ordenTrabajoDao.contarPorEquipo(id) > 0
+
     suspend fun crear(equipo: Equipo): Long = equipoDao.insert(equipo)
 
     suspend fun actualizar(equipo: Equipo) = equipoDao.update(equipo)
