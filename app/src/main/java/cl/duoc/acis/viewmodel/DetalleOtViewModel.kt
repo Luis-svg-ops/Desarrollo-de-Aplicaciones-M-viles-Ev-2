@@ -12,6 +12,7 @@ import cl.duoc.acis.model.OrdenTrabajo
 import cl.duoc.acis.model.OtConDetalle
 import cl.duoc.acis.model.Rol
 import cl.duoc.acis.repository.OrdenTrabajoRepository
+import cl.duoc.acis.util.ServicioUbicacion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,7 +37,8 @@ class DetalleOtViewModel(
     private val repository: OrdenTrabajoRepository,
     private val otId: Long,
     private val rol: Rol,
-    private val usuarioId: Long
+    private val usuarioId: Long,
+    private val ubicacion: ServicioUbicacion
 ) : ViewModel() {
 
     // La OT con su local, equipo y técnico. Se actualiza sola si cambia en la base
@@ -97,6 +99,32 @@ class DetalleOtViewModel(
 
     fun cerrarDialogo() {
         _accionConMotivo.value = null
+    }
+
+    // ---- Check-in con GPS ----
+    private val _buscandoUbicacion = MutableStateFlow(false)
+    val buscandoUbicacion: StateFlow<Boolean> = _buscandoUbicacion.asStateFlow()
+
+    /**
+     * Se llama cuando la pantalla ya tiene el permiso de ubicación.
+     * Revisa que la ubicación esté encendida, la lee una vez y hace el check-in.
+     */
+    fun hacerCheckIn() {
+        if (_buscandoUbicacion.value) return
+        if (!ubicacion.estaActivada()) {
+            _mensaje.value = "Activa la ubicación del teléfono para hacer check-in"
+            return
+        }
+        viewModelScope.launch {
+            _buscandoUbicacion.value = true
+            val punto = ubicacion.obtener()
+            _mensaje.value = if (punto == null) {
+                "No se pudo obtener la ubicación. Intenta de nuevo en un lugar abierto"
+            } else {
+                repository.checkIn(otId, usuarioId, punto.latitude, punto.longitude) ?: "Check-in registrado"
+            }
+            _buscandoUbicacion.value = false
+        }
     }
 
     fun mensajeMostrado() {
