@@ -114,7 +114,9 @@ object DatosEjemplo {
                 creada,
                 EventoOT(
                     otId = ot.id, estado = ot.estado,
-                    descripcion = ot.estado.texto + (ot.motivo?.let { ": $it" } ?: ""),
+                    descripcion = if (ot.estado == EstadoOT.ASIGNADA)
+                        "Asignada a " + (usuarios.firstOrNull { it.id == ot.tecnicoId }?.nombre ?: "un técnico")
+                    else ot.estado.texto + (ot.motivo?.let { ": $it" } ?: ""),
                     fecha = ot.checkOutFechaHora ?: ot.checkInFechaHora ?: ot.fechaAceptacion ?: ot.fechaCreacion
                 )
             )
