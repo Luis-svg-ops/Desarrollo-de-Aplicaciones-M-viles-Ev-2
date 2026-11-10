@@ -1,5 +1,6 @@
 package cl.duoc.acis.repository
 
+import cl.duoc.acis.data.EquipoDao
 import cl.duoc.acis.data.OrdenTrabajoDao
 import cl.duoc.acis.model.AccionOT
 import cl.duoc.acis.model.MaquinaEstadosOT
@@ -10,7 +11,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 
-class OrdenTrabajoRepository(private val ordenTrabajoDao: OrdenTrabajoDao) {
+class OrdenTrabajoRepository(
+    private val ordenTrabajoDao: OrdenTrabajoDao,
+    // Para actualizar la última mantención del equipo al cerrar una OT
+    private val equipoDao: EquipoDao
+) {
 
     /** El Jefe ve todas las OT; el Técnico, solo las que tiene asignadas. */
     fun getParaUsuario(usuarioId: Long, rol: Rol): Flow<List<OtConDetalle>> =
@@ -54,7 +59,9 @@ class OrdenTrabajoRepository(private val ordenTrabajoDao: OrdenTrabajoDao) {
             ot.copy(
                 estado = nuevoEstado,
                 // Al reasignar o reprogramar, el motivo anterior (rechazo, visita fallida...) ya no aplica
-                motivo = if (nuevoEstado != actual.estado) null else actual.motivo
+                motivo = if (nuevoEstado != actual.estado) null else actual.motivo,
+                // Reasignada o sin técnico: el (nuevo) técnico tiene que volver a aceptarla
+                fechaAceptacion = if (nuevoEstado != actual.estado) null else actual.fechaAceptacion
             )
         )
         return null
@@ -76,7 +83,12 @@ class OrdenTrabajoRepository(private val ordenTrabajoDao: OrdenTrabajoDao) {
     ): String? {
         val actual = ordenTrabajoDao.getById(otId).first() ?: return "La OT ya no existe"
         MaquinaEstadosOT.validar(accion, actual.estado, rol, motivo, actual.tecnicoId, usuarioId)?.let { return it }
-        val cambiada = actual.copy(estado = accion.hacia, motivo = if (accion.pideMotivo) motivo else actual.motivo)
+        val cambiada = actual.copy(
+            estado = accion.hacia,
+            motivo = if (accion.pideMotivo) motivo else actual.motivo,
+            // Se guarda cuándo aceptó: así la línea de progreso sabe hasta dónde llegó si después se detiene
+            fechaAceptacion = if (accion == AccionOT.ACEPTAR) System.currentTimeMillis() else actual.fechaAceptacion
+        )
         ordenTrabajoDao.update(datos(cambiada))
         return null
     }
@@ -95,13 +107,22 @@ class OrdenTrabajoRepository(private val ordenTrabajoDao: OrdenTrabajoDao) {
         actividades: String,
         materiales: String,
         fotoUri: String
-    ): String? = aplicar(otId, AccionOT.CERRAR, Rol.TECNICO, usuarioId) {
-        it.copy(
-            checkOutFechaHora = System.currentTimeMillis(),
-            diagnostico = diagnostico,
-            actividadesRealizadas = actividades,
-            materialesUtilizados = materiales.ifBlank { null },
-            fotoUri = fotoUri
-        )
+    ): String? {
+        val ahora = System.currentTimeMillis()
+        val error = aplicar(otId, AccionOT.CERRAR, Rol.TECNICO, usuarioId) {
+            it.copy(
+                checkOutFechaHora = ahora,
+                diagnostico = diagnostico,
+                actividadesRealizadas = actividades,
+                materialesUtilizados = materiales.ifBlank { null },
+                fotoUri = fotoUri
+            )
+        }
+        if (error == null) {
+            // La OT cerrada es la mantención más reciente del equipo
+            val ot = ordenTrabajoDao.getById(otId).first()
+            ot?.let { equipoDao.getById(it.equipoId) }?.let { equipoDao.update(it.copy(fechaUltimaMantencion = ahora)) }
+        }
+        return error
     }
 }

@@ -30,6 +30,8 @@ data class OrdenTrabajo(
     // Fechas en milisegundos: se guarda la hora real de cada acción (base para el SLA)
     val fechaCreacion: Long,
     val fechaProgramada: Long,
+    // Cuándo el técnico aceptó la OT (null si aún no la acepta o se reasignó)
+    val fechaAceptacion: Long? = null,
     val checkInFechaHora: Long? = null,
     val checkInLat: Double? = null,
     val checkInLon: Double? = null,
