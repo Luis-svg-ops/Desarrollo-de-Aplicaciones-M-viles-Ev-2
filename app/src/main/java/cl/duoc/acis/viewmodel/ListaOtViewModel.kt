@@ -33,7 +33,8 @@ class ListaOtViewModel(
     ) else listOf(
         FiltroOt("Pendientes", setOf(EstadoOT.ASIGNADA, EstadoOT.ACEPTADA)),
         FiltroOt("En ejecución", setOf(EstadoOT.EN_EJECUCION)),
-        FiltroOt("Cerradas", setOf(EstadoOT.CERRADA)),
+        // Todo lo que ya salió de la agenda del técnico: cerradas y las que volvieron al jefe
+        FiltroOt("Cerradas", setOf(EstadoOT.CERRADA, EstadoOT.VISITA_FALLIDA, EstadoOT.RECHAZADA, EstadoOT.POSTERGADA, EstadoOT.CANCELADA)),
     )
 
     // Todas las OT del usuario. Es un Flow: si la base cambia, la lista se actualiza sola
