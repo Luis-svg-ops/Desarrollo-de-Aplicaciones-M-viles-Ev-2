@@ -71,7 +71,7 @@ fun PerfilScreen(viewModel: PerfilViewModel, onCerrarSesion: () -> Unit) {
                             Text(u.nombre, style = MaterialTheme.typography.titleLarge)
                             Text(u.email, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(
-                                if (u.rol == Rol.JEFE) "Jefe de mantenimiento" else "Técnico de terreno",
+                                if (u.rol == Rol.CLIENTE) "Cliente · solo consulta" else u.rol.texto,
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -81,6 +81,8 @@ fun PerfilScreen(viewModel: PerfilViewModel, onCerrarSesion: () -> Unit) {
             }
 
             // ---- Permisos y privacidad ----
+            // El cliente no usa GPS ni cámara: no necesita esta sección
+            if (usuario?.rol != Rol.CLIENTE) {
             Text("Permisos y privacidad", style = MaterialTheme.typography.titleMedium)
             Tarjeta {
                 Permiso(Icons.Filled.LocationOn, "Ubicación", "Solo al hacer check-in, para registrar dónde llegaste. No te sigue durante el día.")
@@ -95,6 +97,7 @@ fun PerfilScreen(viewModel: PerfilViewModel, onCerrarSesion: () -> Unit) {
                     Icon(Icons.Filled.Settings, contentDescription = null)
                     Text("  Administrar permisos")
                 }
+            }
             }
 
             OutlinedButton(

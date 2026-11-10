@@ -21,24 +21,31 @@ data class FiltroOt(val texto: String, val estados: Set<EstadoOT>?)
 class ListaOtViewModel(
     repository: OrdenTrabajoRepository,
     usuarioId: Long,
-    rol: Rol
+    rol: Rol,
+    localId: Long? = null
 ) : ViewModel() {
 
     // El técnico usa pestañas; el jefe, chips con más opciones
-    val filtros: List<FiltroOt> = if (rol == Rol.JEFE) listOf(
+    val filtros: List<FiltroOt> = if (rol == Rol.CLIENTE) listOf(
+        // El cliente solo distingue lo que sigue abierto de lo terminado
+        FiltroOt("En curso", EstadoOT.entries.toSet() - setOf(EstadoOT.CONFORME, EstadoOT.CANCELADA)),
+        FiltroOt("Terminadas", setOf(EstadoOT.CONFORME, EstadoOT.CANCELADA)),
+    ) else if (rol == Rol.JEFE) listOf(
         FiltroOt("Todas", null),
         FiltroOt("Sin asignar", setOf(EstadoOT.CREADA, EstadoOT.RECHAZADA, EstadoOT.VISITA_FALLIDA, EstadoOT.POSTERGADA)),
         FiltroOt("En curso", setOf(EstadoOT.ASIGNADA, EstadoOT.ACEPTADA, EstadoOT.EN_EJECUCION)),
-        FiltroOt("Cerradas", setOf(EstadoOT.CERRADA, EstadoOT.CANCELADA)),
+        // Cerradas por el técnico que esperan la conformidad de la jefatura
+        FiltroOt("Por revisar", setOf(EstadoOT.CERRADA)),
+        FiltroOt("Cerradas", setOf(EstadoOT.CONFORME, EstadoOT.CANCELADA)),
     ) else listOf(
         FiltroOt("Pendientes", setOf(EstadoOT.ASIGNADA, EstadoOT.ACEPTADA)),
         FiltroOt("En ejecución", setOf(EstadoOT.EN_EJECUCION)),
         // Todo lo que ya salió de la agenda del técnico: cerradas y las que volvieron al jefe
-        FiltroOt("Cerradas", setOf(EstadoOT.CERRADA, EstadoOT.VISITA_FALLIDA, EstadoOT.RECHAZADA, EstadoOT.POSTERGADA, EstadoOT.CANCELADA)),
+        FiltroOt("Cerradas", setOf(EstadoOT.CERRADA, EstadoOT.CONFORME, EstadoOT.VISITA_FALLIDA, EstadoOT.RECHAZADA, EstadoOT.POSTERGADA, EstadoOT.CANCELADA)),
     )
 
     // Todas las OT del usuario. Es un Flow: si la base cambia, la lista se actualiza sola
-    private val todas: StateFlow<List<OtConDetalle>> = repository.getParaUsuario(usuarioId, rol)
+    private val todas: StateFlow<List<OtConDetalle>> = repository.getParaUsuario(usuarioId, rol, localId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _filtroSeleccionado = MutableStateFlow(0)

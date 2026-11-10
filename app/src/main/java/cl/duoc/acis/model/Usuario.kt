@@ -13,5 +13,7 @@ data class Usuario(
     val email: String,
     // Solo es una demo local: la contraseña va en texto plano (se indica en el README)
     val password: String,
-    val rol: Rol
+    val rol: Rol,
+    // Solo para el cliente: el local que administra (ve únicamente las OT de ese local)
+    val localId: Long? = null
 )

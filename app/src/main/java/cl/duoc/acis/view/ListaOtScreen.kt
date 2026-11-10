@@ -55,7 +55,9 @@ fun ListaOtScreen(
     viewModel: ListaOtViewModel,
     esJefe: Boolean,
     onVerOt: (Long) -> Unit,
-    onNuevaOt: () -> Unit
+    onNuevaOt: () -> Unit,
+    // El cliente ve pestañas como el técnico, pero sin la tarjeta de próxima visita (es del técnico)
+    esCliente: Boolean = false
 ) {
     val ots by viewModel.otsFiltradas.collectAsState()
     val conteos by viewModel.conteos.collectAsState()
@@ -63,7 +65,7 @@ fun ListaOtScreen(
     val proximaVisita by viewModel.proximaVisita.collectAsState()
 
     Scaffold(
-        topBar = { AcisTopBar(if (esJefe) "Órdenes de trabajo" else "Mis OT del día") },
+        topBar = { AcisTopBar(if (esJefe) "Órdenes de trabajo" else if (esCliente) "OT de mi local" else "Mis OT del día") },
         floatingActionButton = {
             // Solo el Jefe crea OT
             if (esJefe) {
@@ -114,7 +116,7 @@ fun ListaOtScreen(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = if (esJefe) 96.dp else 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                if (!esJefe) {
+                if (!esJefe && !esCliente) {
                     item { ProximaVisita(proximaVisita, onVerOt) }
                 }
                 if (ots.isEmpty()) {
@@ -131,7 +133,7 @@ fun ListaOtScreen(
                     // Animación 2: al cambiar de filtro, las tarjetas entran, salen y se reordenan suavemente
                     // (por eso cada tarjeta tiene una key: así Compose sabe cuál es cuál)
                     Box(Modifier.animateItem()) {
-                        TarjetaOt(item = item, mostrarTecnico = esJefe, onClick = { onVerOt(item.ot.id) })
+                        TarjetaOt(item = item, mostrarTecnico = esJefe || esCliente, onClick = { onVerOt(item.ot.id) })
                     }
                 }
             }

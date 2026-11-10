@@ -152,7 +152,7 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginExitoso: (Usuario) -> Unit) {
                 }
 
                 Text(
-                    "Usuarios de prueba: tecnico@acis.cl o jefe@acis.cl · contraseña 123456",
+                    "Usuarios de prueba: tecnico@acis.cl, jefe@acis.cl o cliente@acis.cl · contraseña 123456",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,

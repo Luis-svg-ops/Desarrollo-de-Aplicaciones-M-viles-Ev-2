@@ -32,6 +32,15 @@ enum class AccionOT(
     // Hito 7: el diagnóstico con check-out hace este cambio
     CERRAR("Registrar diagnóstico y cerrar", setOf(EstadoOT.EN_EJECUCION), EstadoOT.CERRADA, Rol.TECNICO),
 
+    // Revisión de la jefatura: revisa foto, diagnóstico, GPS y duración
+    CONFORMIDAD("Dar conformidad", setOf(EstadoOT.CERRADA), EstadoOT.CONFORME, Rol.JEFE),
+
+    // Si el trabajo no está bien, vuelve al técnico para que lo corrija y cierre de nuevo
+    DISCONFORMIDAD(
+        "Disconformidad", setOf(EstadoOT.CERRADA), EstadoOT.EN_EJECUCION, Rol.JEFE,
+        listOf("Foto poco clara", "Trabajo incompleto", "Falta información en el diagnóstico")
+    ),
+
     POSTERGAR(
         "Postergar", setOf(EstadoOT.ASIGNADA, EstadoOT.ACEPTADA), EstadoOT.POSTERGADA, Rol.JEFE,
         listOf("Lluvia o viento fuerte", "Solicitud del cliente", "Falta de repuesto")
@@ -72,7 +81,7 @@ enum class AccionOT(
 object MaquinaEstadosOT {
 
     /** Estados finales: de aquí la OT ya no sale. */
-    val estadosFinales = setOf(EstadoOT.CERRADA, EstadoOT.CANCELADA)
+    val estadosFinales = setOf(EstadoOT.CONFORME, EstadoOT.CANCELADA)
 
     /** A qué estados puede pasar una OT desde el estado dado (la "tabla de transiciones"). */
     fun destinos(estado: EstadoOT): Set<EstadoOT> =
@@ -109,7 +118,7 @@ object MaquinaEstadosOT {
 
     /** El Jefe puede editar la OT mientras no esté en ejecución ni terminada. */
     fun sePuedeEditar(estado: EstadoOT): Boolean =
-        estado != EstadoOT.EN_EJECUCION && estado !in estadosFinales
+        estado != EstadoOT.EN_EJECUCION && estado != EstadoOT.CERRADA && estado !in estadosFinales
 
     /**
      * Estado en que queda una OT al guardar el formulario de edición:

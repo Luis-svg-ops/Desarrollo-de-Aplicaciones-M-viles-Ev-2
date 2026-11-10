@@ -179,9 +179,10 @@ fun DetalleOtScreen(
                 Aviso("Motivo: ${item.ot.motivo ?: ""}")
             }
             Datos(item)
-            if (item.ot.estado == EstadoOT.CERRADA) Cierre(item)
+            val terminada = item.ot.estado == EstadoOT.CERRADA || item.ot.estado == EstadoOT.CONFORME
+            if (terminada) Cierre(item)
             AnimatedVisibility(
-                visible = item.ot.estado != EstadoOT.CERRADA && item.ot.checkInFechaHora != null,
+                visible = !terminada && item.ot.checkInFechaHora != null,
                 enter = aparecer, exit = desaparecer
             ) { CheckIn(item) }
             Acciones(item, acciones, puedeEditar, buscandoUbicacion, onAccion = viewModel::onAccion,
@@ -305,7 +306,8 @@ private fun Acciones(
                 )
                 AccionOT.CERRAR -> BotonGrande(accion.texto, onClick = onDiagnostico)
                 // Rechazar y cancelar se ven en rojo: sacan a la OT del camino normal
-                AccionOT.RECHAZAR, AccionOT.CANCELAR -> BotonContorno(accion.texto, peligro = true) { onAccion(accion) }
+                AccionOT.CONFORMIDAD -> BotonGrande(accion.texto) { onAccion(accion) }
+                AccionOT.RECHAZAR, AccionOT.CANCELAR, AccionOT.DISCONFORMIDAD -> BotonContorno(accion.texto, peligro = true) { onAccion(accion) }
                 else -> BotonContorno(accion.texto) { onAccion(accion) }
             }
         }
