@@ -1,5 +1,13 @@
 package cl.duoc.acis.view.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -60,16 +68,29 @@ fun LineaProgreso(estado: EstadoOT, pasoAlcanzado: Int, modifier: Modifier = Mod
 @Composable
 private fun Paso(numero: Int, texto: String, tipo: TipoPaso, icono: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier) {
     val primario = MaterialTheme.colorScheme.primary
-    val (fondo, borde, contenido) = when (tipo) {
+    val (fondoMeta, bordeMeta, contenidoMeta) = when (tipo) {
         TipoPaso.HECHO -> Triple(primario, primario, MaterialTheme.colorScheme.onPrimary)
         TipoPaso.ACTUAL -> Triple(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.secondary)
         TipoPaso.ALERTA -> Triple(MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.error)
         TipoPaso.PENDIENTE -> Triple(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline, MaterialTheme.colorScheme.onSurfaceVariant)
     }
+    // Animación 5: cuando la OT avanza, cada círculo cambia de color suavemente...
+    val fondo by animateColorAsState(fondoMeta, tween(DURACION_NORMAL), label = "fondo")
+    val borde by animateColorAsState(bordeMeta, tween(DURACION_NORMAL), label = "borde")
+    val contenido by animateColorAsState(contenidoMeta, tween(DURACION_NORMAL), label = "contenido")
+    // ...y el paso actual "late" despacio para marcar dónde está la OT ahora
+    val latido = rememberInfiniteTransition(label = "latido")
+    val escala by latido.animateFloat(
+        initialValue = 1f,
+        targetValue = if (tipo == TipoPaso.ACTUAL) 1.12f else 1f,
+        animationSpec = infiniteRepeatable(tween(800), RepeatMode.Reverse),
+        label = "escala"
+    )
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Box(
             modifier = Modifier
                 .size(32.dp)
+                .scale(escala)
                 .clip(CircleShape)
                 .background(fondo)
                 .border(2.dp, borde, CircleShape),

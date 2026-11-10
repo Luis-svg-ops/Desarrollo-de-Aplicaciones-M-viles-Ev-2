@@ -1,5 +1,13 @@
 package cl.duoc.acis.view.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
@@ -60,13 +68,21 @@ fun colorPrioridad(prioridad: Prioridad): Color = when (prioridad) {
 /** El estado como texto con ícono, sin recuadro (decisión del mockup). */
 @Composable
 fun EstadoTexto(estado: EstadoOT, modifier: Modifier = Modifier) {
-    val color = colorEstado(estado)
-    Row(
+    // Animación 4: al cambiar el estado (aceptar, check-in...) el color se transforma y el texto nuevo
+    // sube mientras el anterior sale, para que el técnico note que su acción tuvo efecto
+    val color by animateColorAsState(colorEstado(estado), tween(DURACION_NORMAL), label = "colorEstado")
+    AnimatedContent(
+        targetState = estado,
+        transitionSpec = {
+            (fadeIn(tween(DURACION_NORMAL)) + slideInVertically(tween(DURACION_NORMAL)) { it / 2 })
+                .togetherWith(fadeOut(tween(DURACION_CORTA)))
+        },
         modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Icon(iconoEstado(estado), contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
-        Text(estado.texto, color = color, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+        label = "estado"
+    ) { actual ->
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Icon(iconoEstado(actual), contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
+            Text(actual.texto, color = color, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+        }
     }
 }

@@ -1,5 +1,6 @@
 package cl.duoc.acis.view
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -127,7 +128,11 @@ fun ListaOtScreen(
                     }
                 }
                 items(ots, key = { it.ot.id }) { item ->
-                    TarjetaOt(item = item, mostrarTecnico = esJefe, onClick = { onVerOt(item.ot.id) })
+                    // Animación 2: al cambiar de filtro, las tarjetas entran, salen y se reordenan suavemente
+                    // (por eso cada tarjeta tiene una key: así Compose sabe cuál es cuál)
+                    Box(Modifier.animateItem()) {
+                        TarjetaOt(item = item, mostrarTecnico = esJefe, onClick = { onVerOt(item.ot.id) })
+                    }
                 }
             }
         }

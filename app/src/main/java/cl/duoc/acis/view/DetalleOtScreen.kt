@@ -1,5 +1,8 @@
 package cl.duoc.acis.view
 
+import androidx.compose.animation.AnimatedVisibility
+import cl.duoc.acis.view.components.aparecer
+import cl.duoc.acis.view.components.desaparecer
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -170,10 +173,16 @@ fun DetalleOtScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Encabezado(item)
-            if (item.ot.motivo != null) Aviso("Motivo: ${item.ot.motivo}")
+            // Animación 3: el aviso de motivo y la tarjeta de check-in se despliegan cuando aparecen
+            AnimatedVisibility(visible = item.ot.motivo != null, enter = aparecer, exit = desaparecer) {
+                Aviso("Motivo: ${item.ot.motivo ?: ""}")
+            }
             Datos(item)
             if (item.ot.estado == EstadoOT.CERRADA) Cierre(item)
-            else if (item.ot.checkInFechaHora != null) CheckIn(item)
+            AnimatedVisibility(
+                visible = item.ot.estado != EstadoOT.CERRADA && item.ot.checkInFechaHora != null,
+                enter = aparecer, exit = desaparecer
+            ) { CheckIn(item) }
             Acciones(item, acciones, puedeEditar, buscandoUbicacion, onAccion = viewModel::onAccion,
                 onCheckIn = onCheckIn, onEditar = onEditar, onDiagnostico = onDiagnostico)
         }
