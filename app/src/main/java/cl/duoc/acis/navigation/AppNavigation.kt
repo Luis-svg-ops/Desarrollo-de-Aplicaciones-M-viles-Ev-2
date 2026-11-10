@@ -47,6 +47,7 @@ import cl.duoc.acis.model.Rol
 import cl.duoc.acis.repository.EquipoRepository
 import cl.duoc.acis.repository.LocalRepository
 import cl.duoc.acis.repository.OrdenTrabajoRepository
+import cl.duoc.acis.util.ServicioUbicacion
 import cl.duoc.acis.repository.UsuarioRepository
 import cl.duoc.acis.view.DetalleOtScreen
 import cl.duoc.acis.view.DiagnosticoScreen
@@ -81,6 +82,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     val database = remember { AppDatabase.getDatabase(context) }
     val usuarioRepository = remember { UsuarioRepository(database.usuarioDao()) }
     val ordenTrabajoRepository = remember { OrdenTrabajoRepository(database.ordenTrabajoDao()) }
+    val ubicacion = remember { ServicioUbicacion(context.applicationContext) }
     val localRepository = remember { LocalRepository(database.localDao()) }
     val equipoRepository = remember { EquipoRepository(database.equipoDao(), database.ordenTrabajoDao()) }
 
@@ -191,7 +193,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             ) { backStack ->
                 val otId = backStack.arguments?.getLong("otId") ?: 0L
                 val detalleViewModel: DetalleOtViewModel = viewModel(
-                    factory = fabrica { DetalleOtViewModel(ordenTrabajoRepository, otId, rol ?: Rol.TECNICO, usuarioId) }
+                    factory = fabrica { DetalleOtViewModel(ordenTrabajoRepository, otId, rol ?: Rol.TECNICO, usuarioId, ubicacion) }
                 )
                 DetalleOtScreen(
                     viewModel = detalleViewModel,

@@ -7,7 +7,7 @@ App Android para gestionar órdenes de trabajo (OT) en terreno de ACIS Servicios
 
 Hecha con Kotlin, Jetpack Compose y Material 3. Los datos se guardan en el celular con Room; no hay servidor.
 
-> **Estado:** en desarrollo. Hoy están la estructura, el tema, la navegación, las pantallas de base (hito 1) la base de datos local con Room y datos de ejemplo (hito 2) el login con ViewModel y validaciones (hito 3) y la lista y el detalle de OT con datos reales (hito 4): filtros por estado, tarjeta de próxima visita, línea de progreso y aceptar una OT. Además, el formulario para crear y editar OT (hito 5) con validación por campo, equipo filtrado por local, calendario y reloj de Material 3. Los cambios de estado (aceptar, rechazar, visita fallida, postergar, cancelar y reasignar) los controla una máquina de estados con tests. El check-in, el cierre y el resto de las funciones llegan en los hitos siguientes.
+> **Estado:** en desarrollo. Hoy están la estructura, el tema, la navegación, las pantallas de base (hito 1) la base de datos local con Room y datos de ejemplo (hito 2) el login con ViewModel y validaciones (hito 3) y la lista y el detalle de OT con datos reales (hito 4): filtros por estado, tarjeta de próxima visita, línea de progreso y aceptar una OT. Además, el formulario para crear y editar OT (hito 5) con validación por campo, equipo filtrado por local, calendario y reloj de Material 3. Los cambios de estado (aceptar, rechazar, visita fallida, postergar, cancelar y reasignar) los controla una máquina de estados con tests. El check-in con GPS (hito 6) pide el permiso de ubicación en tiempo de ejecución y guarda hora y coordenadas. El cierre con foto y el resto de las funciones llegan en los hitos siguientes.
 
 ## Cómo correrla
 
@@ -22,6 +22,10 @@ Por consola también se puede compilar con:
 ```
 
 El APK queda en `app/build/outputs/apk/debug/`.
+
+## Probar el check-in en el emulador
+
+El emulador no tiene GPS físico: la ubicación se simula. Con el emulador abierto, en **⋯ (Extended controls) → Location**, buscar una dirección (por ejemplo "Av. Pajaritos 2450, Maipú") y presionar **Set location**. Luego, como técnico, abrir una OT aceptada y tocar **Hacer check-in**.
 
 ## Usuarios de prueba
 

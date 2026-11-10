@@ -1,5 +1,19 @@
 package cl.duoc.acis.view
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import cl.duoc.acis.util.formatoCoordenadas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -64,7 +78,56 @@ fun DetalleOtScreen(
     val accionConMotivo by viewModel.accionConMotivo.collectAsState()
     val motivoError by viewModel.motivoError.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
+    val buscandoUbicacion by viewModel.buscandoUbicacion.collectAsState()
     val snackbar = remember { SnackbarHostState() }
+
+    // ---- Permiso de ubicación para el check-in ----
+    val context = LocalContext.current
+    var explicarUbicacion by remember { mutableStateOf(false) }
+    var permisoNegado by remember { mutableStateOf(false) }
+    // Abre el diálogo de permisos de Android y recibe la respuesta del usuario
+    val pedirPermiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { respuesta ->
+        if (respuesta.values.any { it }) viewModel.hacerCheckIn() else permisoNegado = true
+    }
+    val onCheckIn = {
+        if (tienePermisoUbicacion(context)) viewModel.hacerCheckIn() else explicarUbicacion = true
+    }
+
+    if (explicarUbicacion) {
+        // Primero se explica para qué se usa; recién después se pide el permiso real
+        AlertDialog(
+            onDismissRequest = { explicarUbicacion = false },
+            icon = { Icon(Icons.Filled.LocationOn, contentDescription = null) },
+            title = { Text("¿Permitir ubicación?") },
+            text = { Text("ACIS OT usa tu ubicación solo en este momento, para registrar dónde hiciste el check-in. No te sigue durante el día.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    explicarUbicacion = false
+                    pedirPermiso.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+                }) { Text("Continuar") }
+            },
+            dismissButton = { TextButton(onClick = { explicarUbicacion = false }) { Text("Ahora no") } }
+        )
+    }
+
+    if (permisoNegado) {
+        // Si lo rechazó: se explica la consecuencia y se ofrece ir a Ajustes (Android deja de preguntar tras 2 rechazos)
+        AlertDialog(
+            onDismissRequest = { permisoNegado = false },
+            icon = { Icon(Icons.Filled.Warning, contentDescription = null) },
+            title = { Text("Sin permiso de ubicación") },
+            text = { Text("Sin la ubicación no se puede registrar tu llegada al local. Puedes activarla en Ajustes > Permisos > Ubicación.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    permisoNegado = false
+                    context.startActivity(
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+                    )
+                }) { Text("Abrir ajustes") }
+            },
+            dismissButton = { TextButton(onClick = { permisoNegado = false }) { Text("Cerrar") } }
+        )
+    }
 
     // Aviso del resultado de cada acción (o el error que devolvió la lógica)
     LaunchedEffect(mensaje) {
@@ -109,7 +172,9 @@ fun DetalleOtScreen(
             if (item.ot.motivo != null) Aviso("Motivo: ${item.ot.motivo}")
             Datos(item)
             if (item.ot.estado == EstadoOT.CERRADA) Cierre(item)
-            Acciones(item, acciones, puedeEditar, onAccion = viewModel::onAccion, onEditar = onEditar, onDiagnostico = onDiagnostico)
+            else if (item.ot.checkInFechaHora != null) CheckIn(item)
+            Acciones(item, acciones, puedeEditar, buscandoUbicacion, onAccion = viewModel::onAccion,
+                onCheckIn = onCheckIn, onEditar = onEditar, onDiagnostico = onDiagnostico)
         }
     }
 }
@@ -157,11 +222,38 @@ private fun Datos(item: OtConDetalle) {
     }
 }
 
+/** Resultado del check-in mientras la OT está en ejecución: cuándo y dónde llegó el técnico. */
+@Composable
+private fun CheckIn(item: OtConDetalle) {
+    val ot = item.ot
+    TarjetaBlanca {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Text("  Check-in registrado", style = MaterialTheme.typography.titleSmall)
+        }
+        ot.checkInFechaHora?.let { Fila("Hora", fechaHoraCorta(it)) }
+        Coordenadas(ot)
+    }
+}
+
+@Composable
+private fun Coordenadas(ot: cl.duoc.acis.model.OrdenTrabajo) {
+    val lat = ot.checkInLat
+    val lon = ot.checkInLon
+    if (lat != null && lon != null) Fila("Ubicación GPS", formatoCoordenadas(lat, lon))
+}
+
+private fun tienePermisoUbicacion(context: Context): Boolean =
+    listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION).any {
+        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+    }
+
 @Composable
 private fun Cierre(item: OtConDetalle) {
     val ot = item.ot
     TarjetaBlanca {
         ot.checkInFechaHora?.let { Fila("Check-in", fechaHoraCorta(it)) }
+        Coordenadas(ot)
         ot.checkOutFechaHora?.let { Fila("Check-out", fechaHoraCorta(it)) }
         // Duración de la atención: diferencia entre check-out y check-in (base del SLA)
         val inicio = ot.checkInFechaHora
@@ -181,7 +273,9 @@ private fun Acciones(
     item: OtConDetalle,
     acciones: List<AccionOT>,
     puedeEditar: Boolean,
+    buscandoUbicacion: Boolean,
     onAccion: (AccionOT) -> Unit,
+    onCheckIn: () -> Unit,
     onEditar: () -> Unit,
     onDiagnostico: () -> Unit
 ) {
@@ -189,8 +283,12 @@ private fun Acciones(
         acciones.forEach { accion ->
             when (accion) {
                 AccionOT.ACEPTAR -> BotonGrande(accion.texto) { onAccion(accion) }
-                AccionOT.CHECK_IN -> Aviso("El check-in con GPS se implementa en el hito 6.")
-                AccionOT.CERRAR -> BotonGrande(accion.texto, onDiagnostico)
+                AccionOT.CHECK_IN -> BotonGrande(
+                    if (buscandoUbicacion) "Obteniendo ubicación…" else accion.texto,
+                    habilitado = !buscandoUbicacion,
+                    onClick = onCheckIn
+                )
+                AccionOT.CERRAR -> BotonGrande(accion.texto, onClick = onDiagnostico)
                 // Rechazar y cancelar se ven en rojo: sacan a la OT del camino normal
                 AccionOT.RECHAZAR, AccionOT.CANCELAR -> BotonContorno(accion.texto, peligro = true) { onAccion(accion) }
                 else -> BotonContorno(accion.texto) { onAccion(accion) }
@@ -261,8 +359,8 @@ private fun DialogoMotivo(
 }
 
 @Composable
-private fun BotonGrande(texto: String, onClick: () -> Unit) {
-    Button(onClick = onClick, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(texto) }
+private fun BotonGrande(texto: String, habilitado: Boolean = true, onClick: () -> Unit) {
+    Button(onClick = onClick, enabled = habilitado, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(texto) }
 }
 
 @Composable

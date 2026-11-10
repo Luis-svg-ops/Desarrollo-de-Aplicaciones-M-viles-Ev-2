@@ -60,10 +60,25 @@ class OrdenTrabajoRepository(private val ordenTrabajoDao: OrdenTrabajoDao) {
      * Lee el estado actual desde Room y le pregunta a la máquina de estados si el cambio está
      * permitido. Devuelve el mensaje de error o null si se guardó.
      */
-    suspend fun aplicar(otId: Long, accion: AccionOT, rol: Rol, usuarioId: Long, motivo: String? = null): String? {
+    suspend fun aplicar(
+        otId: Long,
+        accion: AccionOT,
+        rol: Rol,
+        usuarioId: Long,
+        motivo: String? = null,
+        // Datos extra que se guardan junto con el cambio (por ejemplo, las coordenadas del check-in)
+        datos: (OrdenTrabajo) -> OrdenTrabajo = { it }
+    ): String? {
         val actual = ordenTrabajoDao.getById(otId).first() ?: return "La OT ya no existe"
         MaquinaEstadosOT.validar(accion, actual.estado, rol, motivo, actual.tecnicoId, usuarioId)?.let { return it }
-        ordenTrabajoDao.update(actual.copy(estado = accion.hacia, motivo = if (accion.pideMotivo) motivo else actual.motivo))
+        val cambiada = actual.copy(estado = accion.hacia, motivo = if (accion.pideMotivo) motivo else actual.motivo)
+        ordenTrabajoDao.update(datos(cambiada))
         return null
     }
+
+    /** Check-in: la OT pasa a En ejecución y se guardan la hora real y dónde estaba el técnico. */
+    suspend fun checkIn(otId: Long, usuarioId: Long, lat: Double, lon: Double): String? =
+        aplicar(otId, AccionOT.CHECK_IN, Rol.TECNICO, usuarioId) {
+            it.copy(checkInFechaHora = System.currentTimeMillis(), checkInLat = lat, checkInLon = lon)
+        }
 }
