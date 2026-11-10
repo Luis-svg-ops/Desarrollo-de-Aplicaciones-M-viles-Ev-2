@@ -96,9 +96,10 @@ app/src/main/java/cl/duoc/acis/
 
 ## Tests
 
-34 tests unitarios en `app/src/test`, que corren sin emulador:
+37 tests unitarios en `app/src/test`, que corren sin emulador:
 
 - `MaquinaEstadosOTTest` (18): rutas permitidas y prohibidas de la OT, estados finales, ningún estado huérfano y que el formulario de edición nunca invente una ruta.
 - `ValidacionesTest` (14): correo, contraseña, fechas, descripción, diagnóstico, foto y datos del equipo.
 - `UbicacionTest` (1): formato de las coordenadas.
 - `InicialesTest` (1): iniciales del avatar del perfil.
+- `DuracionTest` (3): duración de la atención ("menos de 1 min", "45 min", "1 h 20 min").
