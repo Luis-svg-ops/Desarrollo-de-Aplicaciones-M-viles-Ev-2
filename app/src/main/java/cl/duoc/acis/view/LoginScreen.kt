@@ -49,8 +49,9 @@ private val FondoHielo = Brush.verticalGradient(
 @Composable
 fun LoginScreen(viewModel: LoginViewModel, onLoginExitoso: (Usuario) -> Unit) {
     // La pantalla solo observa el estado del ViewModel
-    val email by viewModel.email.collectAsState()
-    val password by viewModel.password.collectAsState()
+    // El texto de los campos se lee directo (estado de Compose); el resto, con collectAsState
+    val email = viewModel.email
+    val password = viewModel.password
     val emailError by viewModel.emailError.collectAsState()
     val passwordError by viewModel.passwordError.collectAsState()
     val credencialesError by viewModel.credencialesError.collectAsState()
