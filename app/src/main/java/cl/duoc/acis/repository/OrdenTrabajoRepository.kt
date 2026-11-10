@@ -118,7 +118,9 @@ class OrdenTrabajoRepository(
                 diagnostico = diagnostico,
                 actividadesRealizadas = actividades,
                 materialesUtilizados = materiales.ifBlank { null },
-                fotoUri = fotoUri
+                fotoUri = fotoUri,
+                // Si venía de una disconformidad, el motivo ya se corrigió
+                motivo = null
             )
         }
         if (error == null) {

@@ -20,9 +20,13 @@ Hecha con Kotlin, Jetpack Compose y Material 3. Los datos se guardan en el celul
 - En su perfil ve sus datos y para qué usa la app cada permiso.
 
 **Jefe de mantenimiento**
-- Ve todas las OT con filtros (Todas, Sin asignar, En curso, Cerradas).
+- Ve todas las OT con filtros (Todas, Sin asignar, En curso, Por revisar, Cerradas).
+- Revisa la evidencia de cada OT cerrada y da **conformidad** o **disconformidad** (con motivo, la OT vuelve al técnico).
 - Crea, edita, asigna, reasigna, posterga y cancela OT.
 - Administra los equipos de cada local (crear, editar, eliminar o dar de baja) y ve su historial.
+
+**Cliente (administrador de un local)**
+- Solo consulta: ve el avance de las OT de su local (estado, técnico, check-in, diagnóstico y foto), sin poder modificarlas.
 
 ## Cómo cumple la rúbrica
 
@@ -57,6 +61,7 @@ El APK queda en `app/build/outputs/apk/debug/`.
 |---|---|---|
 | Técnico | tecnico@acis.cl | 123456 |
 | Jefe de mantenimiento | jefe@acis.cl | 123456 |
+| Cliente (Mall Costanera Oeste) | cliente@acis.cl | 123456 |
 
 Los usuarios se cargan solos en la base de datos la primera vez que se abre la app. Las contraseñas están en texto plano porque es una demo local, sin servidor.
 
@@ -96,10 +101,11 @@ app/src/main/java/cl/duoc/acis/
 
 ## Tests
 
-37 tests unitarios en `app/src/test`, que corren sin emulador:
+ tests unitarios en `app/src/test`, que corren sin emulador:
 
-- `MaquinaEstadosOTTest` (18): rutas permitidas y prohibidas de la OT, estados finales, ningún estado huérfano y que el formulario de edición nunca invente una ruta.
+- `MaquinaEstadosOTTest` (21): rutas permitidas y prohibidas de la OT, conformidad, cliente sin acciones, estados finales, ningún estado huérfano y que el formulario de edición nunca invente una ruta.
 - `ValidacionesTest` (14): correo, contraseña, fechas, descripción, diagnóstico, foto y datos del equipo.
 - `UbicacionTest` (1): formato de las coordenadas.
 - `InicialesTest` (1): iniciales del avatar del perfil.
+- `PasoAlcanzadoTest` (3): hasta qué paso llegó una OT detenida.
 - `DuracionTest` (3): duración de la atención ("menos de 1 min", "45 min", "1 h 20 min").

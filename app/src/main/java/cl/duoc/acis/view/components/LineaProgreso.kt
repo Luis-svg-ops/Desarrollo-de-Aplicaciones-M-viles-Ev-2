@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import cl.duoc.acis.model.EstadoOT
 
 // Pasos del camino normal de una OT
-private val PASOS = listOf(EstadoOT.ASIGNADA, EstadoOT.ACEPTADA, EstadoOT.EN_EJECUCION, EstadoOT.CERRADA)
+private val PASOS = listOf(EstadoOT.ASIGNADA, EstadoOT.ACEPTADA, EstadoOT.EN_EJECUCION, EstadoOT.CERRADA, EstadoOT.CONFORME)
 
 private enum class TipoPaso { HECHO, ACTUAL, PENDIENTE, ALERTA }
 
@@ -54,7 +54,7 @@ fun LineaProgreso(estado: EstadoOT, pasoAlcanzado: Int, modifier: Modifier = Mod
             val tipo = when {
                 fueraDelCamino && i == pasoAlcanzado + 1 -> TipoPaso.ALERTA
                 fueraDelCamino && i <= pasoAlcanzado -> TipoPaso.HECHO
-                i < actual || (estado == EstadoOT.CERRADA && i == actual) -> TipoPaso.HECHO
+                i < actual || (estado == EstadoOT.CONFORME && i == actual) -> TipoPaso.HECHO
                 i == actual -> TipoPaso.ACTUAL
                 else -> TipoPaso.PENDIENTE
             }

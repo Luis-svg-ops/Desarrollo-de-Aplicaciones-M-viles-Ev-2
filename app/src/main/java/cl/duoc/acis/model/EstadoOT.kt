@@ -8,6 +8,8 @@ enum class EstadoOT(val texto: String) {
     RECHAZADA("Rechazada"),
     EN_EJECUCION("En ejecución"),
     CERRADA("Cerrada"),
+    // La jefatura revisó la evidencia y dio su conformidad: fin del ciclo
+    CONFORME("Conforme"),
     POSTERGADA("Postergada"),
     VISITA_FALLIDA("Visita fallida"),
     CANCELADA("Cancelada")

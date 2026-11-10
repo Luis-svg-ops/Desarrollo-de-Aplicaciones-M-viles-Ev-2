@@ -25,7 +25,7 @@ class LocalesViewModel(localRepository: LocalRepository, otRepository: OrdenTrab
                 LocalResumen(
                     local = local,
                     totalOt = delLocal.size,
-                    abiertas = delLocal.count { it.estado !in MaquinaEstadosOT.estadosFinales && it.estado != EstadoOT.CREADA }
+                    abiertas = delLocal.count { it.estado !in MaquinaEstadosOT.estadosFinales && it.estado != EstadoOT.CREADA && it.estado != EstadoOT.CERRADA }
                 )
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
@@ -45,6 +46,7 @@ fun iconoEstado(estado: EstadoOT): ImageVector = when (estado) {
     EstadoOT.RECHAZADA -> Icons.Filled.Close
     EstadoOT.EN_EJECUCION -> Icons.Filled.Build
     EstadoOT.CERRADA -> Icons.Filled.CheckCircle
+    EstadoOT.CONFORME -> Icons.Filled.Star
     EstadoOT.POSTERGADA -> Icons.Filled.DateRange
     EstadoOT.VISITA_FALLIDA -> Icons.Filled.Warning
     EstadoOT.CANCELADA -> Icons.Filled.Clear
@@ -52,7 +54,7 @@ fun iconoEstado(estado: EstadoOT): ImageVector = when (estado) {
 
 @Composable
 fun colorEstado(estado: EstadoOT): Color = when (estado) {
-    EstadoOT.CERRADA -> PrioridadBaja
+    EstadoOT.CERRADA, EstadoOT.CONFORME -> PrioridadBaja
     EstadoOT.EN_EJECUCION, EstadoOT.POSTERGADA -> MaterialTheme.colorScheme.secondary
     EstadoOT.RECHAZADA, EstadoOT.VISITA_FALLIDA -> MaterialTheme.colorScheme.error
     EstadoOT.ASIGNADA, EstadoOT.ACEPTADA -> MaterialTheme.colorScheme.primary

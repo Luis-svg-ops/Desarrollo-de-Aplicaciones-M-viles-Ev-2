@@ -144,6 +144,18 @@ class MaquinaEstadosOTTest {
     }
 
     @Test
+    fun jefeDaConformidadAUnaOtCerrada() {
+        assertNull(MaquinaEstadosOT.validar(AccionOT.CONFORMIDAD, EstadoOT.CERRADA, Rol.JEFE))
+        assertNotNull(MaquinaEstadosOT.validar(AccionOT.CONFORMIDAD, EstadoOT.EN_EJECUCION, Rol.JEFE))
+    }
+
+    @Test
+    fun disconformidadPideMotivoYVuelveAlTecnico() {
+        assertEquals("Selecciona un motivo", MaquinaEstadosOT.validar(AccionOT.DISCONFORMIDAD, EstadoOT.CERRADA, Rol.JEFE))
+        assertEquals(EstadoOT.EN_EJECUCION, AccionOT.DISCONFORMIDAD.hacia)
+    }
+
+    @Test
     fun clienteSoloMiraNuncaTieneBotones() {
         EstadoOT.entries.forEach { assertTrue(MaquinaEstadosOT.accionesDisponibles(it, Rol.CLIENTE).isEmpty()) }
         assertNotNull(MaquinaEstadosOT.validar(AccionOT.CANCELAR, EstadoOT.ASIGNADA, Rol.CLIENTE, "OT duplicada"))
