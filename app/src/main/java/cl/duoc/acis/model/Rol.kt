@@ -1,3 +1,8 @@
 package cl.duoc.acis.model
 
-enum class Rol { TECNICO, JEFE }
+/** Quién usa la app. El cliente (administrador de un local) solo mira el avance de sus OT. */
+enum class Rol(val texto: String) {
+    TECNICO("Técnico de terreno"),
+    JEFE("Jefe de mantenimiento"),
+    CLIENTE("Cliente")
+}

@@ -100,12 +100,19 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     // Sesión: quién inició sesión y con qué rol. Sobrevive a la rotación de pantalla.
     var rol by rememberSaveable { mutableStateOf<Rol?>(null) }
     var usuarioId by rememberSaveable { mutableLongStateOf(0L) }
+    // Local del cliente (0 si no es cliente)
+    var localCliente by rememberSaveable { mutableLongStateOf(0L) }
 
     val entrada by navController.currentBackStackEntryAsState()
     val rutaActual = entrada?.destination?.route
     val esJefe = rol == Rol.JEFE
+    val esCliente = rol == Rol.CLIENTE
 
-    val items = if (esJefe) listOf(
+    val items = if (esCliente) listOf(
+        // El cliente solo consulta sus OT: no ve otros locales
+        ItemBarra(Rutas.Ots.route, "Mis OT", Icons.AutoMirrored.Filled.List),
+        ItemBarra(Rutas.Perfil.route, "Perfil", Icons.Filled.Person),
+    ) else if (esJefe) listOf(
         ItemBarra(Rutas.Ots.route, "Órdenes", Icons.AutoMirrored.Filled.List),
         ItemBarra(Rutas.Locales.route, "Locales", Icons.Filled.Place),
         ItemBarra(Rutas.Perfil.route, "Perfil", Icons.Filled.Person),
@@ -180,16 +187,18 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 LoginScreen(viewModel = loginViewModel, onLoginExitoso = { usuario ->
                     rol = usuario.rol
                     usuarioId = usuario.id
+                    localCliente = usuario.localId ?: 0L
                     navController.navigate(Rutas.Ots.route) { popUpTo(Rutas.Login.route) { inclusive = true } }
                 })
             }
             composable(Rutas.Ots.route) {
                 val listaViewModel: ListaOtViewModel = viewModel(
-                    factory = fabrica { ListaOtViewModel(ordenTrabajoRepository, usuarioId, rol ?: Rol.TECNICO) }
+                    factory = fabrica { ListaOtViewModel(ordenTrabajoRepository, usuarioId, rol ?: Rol.TECNICO, localCliente) }
                 )
                 ListaOtScreen(
                     viewModel = listaViewModel,
                     esJefe = esJefe,
+                    esCliente = esCliente,
                     onVerOt = { navController.navigate(Rutas.DetalleOt.createRoute(it)) },
                     onNuevaOt = { navController.navigate(Rutas.OtForm.createRoute()) }
                 )

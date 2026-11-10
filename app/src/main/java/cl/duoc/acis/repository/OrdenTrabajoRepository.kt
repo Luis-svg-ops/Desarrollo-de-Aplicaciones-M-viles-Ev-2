@@ -18,9 +18,12 @@ class OrdenTrabajoRepository(
 ) {
 
     /** El Jefe ve todas las OT; el Técnico, solo las que tiene asignadas. */
-    fun getParaUsuario(usuarioId: Long, rol: Rol): Flow<List<OtConDetalle>> =
-        if (rol == Rol.JEFE) ordenTrabajoDao.getAllConDetalle()
-        else ordenTrabajoDao.getByTecnicoConDetalle(usuarioId)
+    fun getParaUsuario(usuarioId: Long, rol: Rol, localId: Long? = null): Flow<List<OtConDetalle>> = when (rol) {
+        Rol.JEFE -> ordenTrabajoDao.getAllConDetalle()
+        Rol.TECNICO -> ordenTrabajoDao.getByTecnicoConDetalle(usuarioId)
+        // El cliente solo ve las OT de su local
+        Rol.CLIENTE -> ordenTrabajoDao.getByLocalConDetalle(localId ?: -1)
+    }
 
     fun getByLocal(localId: Long): Flow<List<OrdenTrabajo>> = ordenTrabajoDao.getByLocal(localId)
 

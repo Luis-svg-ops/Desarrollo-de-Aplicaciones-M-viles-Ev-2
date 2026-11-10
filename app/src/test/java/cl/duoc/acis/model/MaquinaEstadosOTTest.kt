@@ -142,4 +142,10 @@ class MaquinaEstadosOTTest {
     fun otCerradaNoSeEdita() {
         assertTrue(!MaquinaEstadosOT.sePuedeEditar(EstadoOT.CERRADA))
     }
+
+    @Test
+    fun clienteSoloMiraNuncaTieneBotones() {
+        EstadoOT.entries.forEach { assertTrue(MaquinaEstadosOT.accionesDisponibles(it, Rol.CLIENTE).isEmpty()) }
+        assertNotNull(MaquinaEstadosOT.validar(AccionOT.CANCELAR, EstadoOT.ASIGNADA, Rol.CLIENTE, "OT duplicada"))
+    }
 }

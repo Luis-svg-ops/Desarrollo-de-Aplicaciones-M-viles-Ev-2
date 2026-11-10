@@ -21,11 +21,16 @@ data class FiltroOt(val texto: String, val estados: Set<EstadoOT>?)
 class ListaOtViewModel(
     repository: OrdenTrabajoRepository,
     usuarioId: Long,
-    rol: Rol
+    rol: Rol,
+    localId: Long? = null
 ) : ViewModel() {
 
     // El técnico usa pestañas; el jefe, chips con más opciones
-    val filtros: List<FiltroOt> = if (rol == Rol.JEFE) listOf(
+    val filtros: List<FiltroOt> = if (rol == Rol.CLIENTE) listOf(
+        // El cliente solo distingue lo que sigue abierto de lo terminado
+        FiltroOt("En curso", EstadoOT.entries.toSet() - setOf(EstadoOT.CERRADA, EstadoOT.CANCELADA)),
+        FiltroOt("Terminadas", setOf(EstadoOT.CERRADA, EstadoOT.CANCELADA)),
+    ) else if (rol == Rol.JEFE) listOf(
         FiltroOt("Todas", null),
         FiltroOt("Sin asignar", setOf(EstadoOT.CREADA, EstadoOT.RECHAZADA, EstadoOT.VISITA_FALLIDA, EstadoOT.POSTERGADA)),
         FiltroOt("En curso", setOf(EstadoOT.ASIGNADA, EstadoOT.ACEPTADA, EstadoOT.EN_EJECUCION)),
@@ -38,7 +43,7 @@ class ListaOtViewModel(
     )
 
     // Todas las OT del usuario. Es un Flow: si la base cambia, la lista se actualiza sola
-    private val todas: StateFlow<List<OtConDetalle>> = repository.getParaUsuario(usuarioId, rol)
+    private val todas: StateFlow<List<OtConDetalle>> = repository.getParaUsuario(usuarioId, rol, localId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _filtroSeleccionado = MutableStateFlow(0)

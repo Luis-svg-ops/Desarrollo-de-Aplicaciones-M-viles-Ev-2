@@ -30,6 +30,8 @@ object DatosEjemplo {
         Usuario(3, "Matías Rojas", "mrojas@acis.cl", "123456", Rol.TECNICO),
         Usuario(4, "Camila Fuentes", "cfuentes@acis.cl", "123456", Rol.TECNICO),
         Usuario(5, "Diego Araya", "daraya@acis.cl", "123456", Rol.TECNICO),
+        // Cliente: Andrea Pino administra el Mall Costanera Oeste (local 2)
+        Usuario(6, "Andrea Pino", "cliente@acis.cl", "123456", Rol.CLIENTE, localId = 2),
     )
 
     private val locales = listOf(
