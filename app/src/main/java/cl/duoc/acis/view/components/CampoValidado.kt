@@ -34,7 +34,13 @@ fun CampoValidado(
     modifier: Modifier = Modifier,
     tipoTeclado: KeyboardType = KeyboardType.Text,
     transformacion: VisualTransformation = VisualTransformation.None,
-    accionFinal: @Composable (() -> Unit)? = null
+    accionFinal: @Composable (() -> Unit)? = null,
+    // Texto de ayuda cuando no hay error (por ejemplo, un contador "25/300")
+    ayuda: String? = null,
+    // Para campos que se eligen tocándolos (fecha, listas): no se escribe en ellos
+    soloLectura: Boolean = false,
+    habilitado: Boolean = true,
+    lineas: Int = 1
 ) {
     OutlinedTextField(
         value = valor,
@@ -43,8 +49,12 @@ fun CampoValidado(
         leadingIcon = { Icon(icono, contentDescription = null) },
         trailingIcon = accionFinal,
         isError = error != null,
+        readOnly = soloLectura,
+        enabled = habilitado,
         supportingText = {
-            if (error != null) {
+            if (error == null && ayuda != null) {
+                Text(ayuda)
+            } else if (error != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -59,7 +69,8 @@ fun CampoValidado(
                 }
             }
         },
-        singleLine = true,
+        singleLine = lineas == 1,
+        minLines = lineas,
         keyboardOptions = KeyboardOptions(keyboardType = tipoTeclado),
         visualTransformation = transformacion,
         modifier = modifier.fillMaxWidth()
