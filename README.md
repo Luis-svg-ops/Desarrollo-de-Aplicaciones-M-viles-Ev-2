@@ -79,7 +79,7 @@ En ambos casos la app primero explica para qué usa el permiso, después lo pide
 ## Reglas de negocio principales
 
 - **Máquina de estados de la OT** (`model/MaquinaEstadosOT.kt`): una tabla define desde qué estado se puede pasar a cuál, qué rol lo hace y si pide motivo. El repositorio la revisa contra el estado guardado antes de cada cambio, y la pantalla muestra solo los botones permitidos.
-- **Equipos:** un equipo con OT no se borra, se da de baja para conservar su historial.
+- **Equipos:** un equipo con OT en curso no se puede borrar; si solo tiene OT terminadas, se da de baja para conservar su historial; sin OT, se elimina.
 - **Fechas:** una OT no se programa en el pasado; la última mantención de un equipo no puede ser futura.
 - **Foto:** es obligatoria para cerrar una OT y se guarda en la carpeta privada de la app (no en la galería), mediante un `FileProvider`.
 
@@ -113,7 +113,7 @@ app/src/main/java/cl/duoc/acis/
 - `PasoAlcanzadoTest` (3): hasta qué paso llegó una OT detenida.
 - `DuracionTest` (3): duración de la atención ("menos de 1 min", "45 min", "1 h 20 min").
 
-Además, **7 pruebas de rutas en el emulador** (`app/src/androidTest/.../RutasOtTest.kt`) recorren con la base de datos real cada camino de una OT (principal, rechazo, visita fallida, postergar y cancelar, sin técnico, acciones prohibidas y vista del cliente) y revisan en cada paso quién ve la OT y qué botones tiene cada rol:
+Además, **24 pruebas de rutas en el emulador** (`app/src/androidTest/.../RutasOtTest.kt` y `RutasExtraTest.kt`) recorren con la base de datos real cada camino de una OT (principal, rechazo, visita fallida, postergar y cancelar, sin técnico, reasignaciones, acciones repetidas o prohibidas, varias disconformidades, borrado de equipos y vista del cliente) y revisan en cada paso quién ve la OT y qué botones tiene cada rol:
 
 ```
 ./gradlew connectedDebugAndroidTest

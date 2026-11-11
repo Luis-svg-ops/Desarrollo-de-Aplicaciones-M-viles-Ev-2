@@ -49,6 +49,10 @@ interface OrdenTrabajoDao {
     @Query("SELECT COUNT(*) FROM ordenes_trabajo WHERE equipoId = :equipoId")
     suspend fun contarPorEquipo(equipoId: Long): Int
 
+    // OT del equipo que todavía no terminan (todo lo que no es Conforme ni Cancelada)
+    @Query("SELECT COUNT(*) FROM ordenes_trabajo WHERE equipoId = :equipoId AND estado NOT IN ('CONFORME', 'CANCELADA')")
+    suspend fun contarAbiertasPorEquipo(equipoId: Long): Int
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(ot: OrdenTrabajo): Long
 
