@@ -9,6 +9,7 @@ import cl.duoc.acis.model.Equipo
 import cl.duoc.acis.model.TipoEquipo
 import cl.duoc.acis.model.UbicacionEquipo
 import cl.duoc.acis.repository.EquipoRepository
+import cl.duoc.acis.repository.ResultadoBorrado
 import cl.duoc.acis.util.validarFechaNoFutura
 import cl.duoc.acis.util.validarObligatorio
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -136,12 +137,24 @@ class EquipoFormViewModel(
         }
     }
 
-    /** Regla de negocio (en el repositorio): con OT se da de baja; sin OT se elimina. */
+    // Aviso cuando la regla no deja borrar (la pantalla lo muestra y se queda en el formulario)
+    private val _aviso = MutableStateFlow<String?>(null)
+    val aviso: StateFlow<String?> = _aviso.asStateFlow()
+
+    fun avisoMostrado() {
+        _aviso.value = null
+    }
+
+    /** La regla de negocio está en el repositorio: con OT en curso no se puede; con historial se da de baja. */
     fun eliminar() {
         val equipo = original ?: return
         viewModelScope.launch {
-            val dadoDeBaja = repository.eliminarODarDeBaja(equipo)
-            _terminado.value = if (dadoDeBaja) "Equipo dado de baja (su historial se conserva)" else "Equipo eliminado"
+            when (repository.eliminarODarDeBaja(equipo)) {
+                ResultadoBorrado.TIENE_OT_EN_CURSO ->
+                    _aviso.value = "No se puede: el equipo tiene OT en curso. Termínalas o cancélalas primero"
+                ResultadoBorrado.DADO_DE_BAJA -> _terminado.value = "Equipo dado de baja (su historial se conserva)"
+                ResultadoBorrado.ELIMINADO -> _terminado.value = "Equipo eliminado"
+            }
         }
     }
 }

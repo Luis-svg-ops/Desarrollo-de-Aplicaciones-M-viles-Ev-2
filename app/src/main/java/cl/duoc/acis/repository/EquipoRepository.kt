@@ -21,16 +21,23 @@ class EquipoRepository(
     suspend fun actualizar(equipo: Equipo) = equipoDao.update(equipo)
 
     /**
-     * Regla de negocio: si el equipo tiene OT, no se borra, se da de baja para conservar
-     * su historial. Si no tiene ninguna, se elimina. Devuelve true si quedó dado de baja.
+     * Reglas de negocio al borrar un equipo:
+     * - si tiene OT en curso (no terminadas), no se puede: el técnico podría ir en camino;
+     * - si solo tiene OT terminadas, no se borra: se da de baja para conservar su historial;
+     * - si no tiene ninguna OT, se elimina.
      */
-    suspend fun eliminarODarDeBaja(equipo: Equipo): Boolean {
-        return if (ordenTrabajoDao.contarPorEquipo(equipo.id) > 0) {
+    suspend fun eliminarODarDeBaja(equipo: Equipo): ResultadoBorrado = when {
+        ordenTrabajoDao.contarAbiertasPorEquipo(equipo.id) > 0 -> ResultadoBorrado.TIENE_OT_EN_CURSO
+        ordenTrabajoDao.contarPorEquipo(equipo.id) > 0 -> {
             equipoDao.update(equipo.copy(dadoDeBaja = true))
-            true
-        } else {
+            ResultadoBorrado.DADO_DE_BAJA
+        }
+        else -> {
             equipoDao.delete(equipo)
-            false
+            ResultadoBorrado.ELIMINADO
         }
     }
 }
+
+/** Qué pasó al intentar borrar un equipo. */
+enum class ResultadoBorrado { ELIMINADO, DADO_DE_BAJA, TIENE_OT_EN_CURSO }

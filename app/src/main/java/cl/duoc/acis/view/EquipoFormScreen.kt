@@ -70,6 +70,15 @@ fun EquipoFormScreen(viewModel: EquipoFormViewModel, onVolver: () -> Unit) {
     val snackbar = remember { SnackbarHostState() }
 
     // Al guardar o borrar: aviso y vuelta al local
+    // Si la regla no deja borrar, se avisa y se queda en el formulario
+    val aviso by viewModel.aviso.collectAsState()
+    LaunchedEffect(aviso) {
+        aviso?.let {
+            snackbar.showSnackbar(it)
+            viewModel.avisoMostrado()
+        }
+    }
+
     LaunchedEffect(terminado) {
         terminado?.let {
             launch { snackbar.showSnackbar(it) }
