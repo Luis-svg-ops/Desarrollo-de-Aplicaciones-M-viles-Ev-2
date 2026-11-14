@@ -1,5 +1,10 @@
 package cl.duoc.acis.aceptacion
 
+import cl.duoc.acis.util.nombreArchivoInforme
+import cl.duoc.acis.util.guardarTexto
+import cl.duoc.acis.util.crearInforme
+import cl.duoc.acis.util.InformeJson
+import android.net.Uri
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -433,5 +438,30 @@ class CriteriosAceptacionTest {
         assertEquals(EstadoOT.CREADA, ot(id).estado)
         // Y el cambio queda en su historial
         assertEquals("Datos editados por la jefatura", historial(id).last())
+    }
+
+    // ================= HU-26 Descargar informe de la OT (JSON con Gson) =================
+
+    @Test
+    fun hu26_exportarInforme_elArchivoTieneLosDatosDeLaOt() = runBlocking<Unit> {
+        // Dado que la OT está validada (Conforme)
+        val id = nuevaOt(tecnico = pedro); cerrada(id)
+        ots.aplicar(id, AccionOT.CONFORMIDAD, Rol.JEFE, jefe)
+        val detalle = ots.getDetalle(id).first()!!
+        // Cuando presiono "Exportar informe" y elijo dónde guardarlo
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val archivo = File(context.cacheDir, nombreArchivoInforme(detalle.ot.numero))
+        val json = InformeJson.aJson(crearInforme(detalle, ots.getHistorial(id).first()))
+        assertTrue(guardarTexto(context, Uri.fromFile(archivo), json))
+        // Entonces obtengo un archivo con fechas, diagnóstico, actividades e historial
+        val leido = InformeJson.desdeJson(archivo.readText())
+        assertEquals(detalle.ot.numero, leido.numero)
+        assertEquals("Conforme", leido.estado)
+        assertEquals("Rodamiento gastado", leido.diagnostico)
+        assertEquals("Cambio de rodamiento", leido.actividades)
+        assertNotNull(leido.checkIn)
+        assertNotNull(leido.checkOut)
+        assertEquals("Conformidad de la jefatura", leido.historial.last().descripcion)
+        archivo.delete()
     }
 }
