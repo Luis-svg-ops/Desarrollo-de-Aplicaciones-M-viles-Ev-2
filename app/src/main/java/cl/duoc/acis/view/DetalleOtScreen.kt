@@ -1,5 +1,9 @@
 package cl.duoc.acis.view
 
+import cl.duoc.acis.util.guardarTexto
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.foundation.layout.size
 import cl.duoc.acis.view.components.textoEstado
 import cl.duoc.acis.view.components.colorEstado
@@ -89,10 +93,25 @@ fun DetalleOtScreen(
     val mensaje by viewModel.mensaje.collectAsState()
     val buscandoUbicacion by viewModel.buscandoUbicacion.collectAsState()
     val historial by viewModel.historial.collectAsState()
+    val puedeExportar by viewModel.puedeExportar.collectAsState()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    // Informe listo para escribir mientras el usuario elige dónde guardarlo
+    var informePendiente by remember { mutableStateOf<String?>(null) }
+    // Android abre su ventana "Guardar como" (no necesita permisos); devuelve dónde guardar o null
+    val guardarInforme = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { destino ->
+        val json = informePendiente
+        informePendiente = null
+        if (destino != null && json != null) {
+            scope.launch {
+                val ok = guardarTexto(context, destino, json)
+                viewModel.avisar(if (ok) "Informe guardado" else "No se pudo guardar el informe")
+            }
+        }
+    }
     val snackbar = remember { SnackbarHostState() }
 
     // ---- Permiso de ubicación para el check-in ----
-    val context = LocalContext.current
     var explicarUbicacion by remember { mutableStateOf(false) }
     var permisoNegado by remember { mutableStateOf(false) }
     // Abre el diálogo de permisos de Android y recibe la respuesta del usuario
@@ -191,6 +210,18 @@ fun DetalleOtScreen(
                 enter = aparecer, exit = desaparecer
             ) { CheckIn(item) }
             Historial(historial, paraCliente = viewModel.esCliente)
+            if (puedeExportar) {
+                OutlinedButton(
+                    onClick = {
+                        informePendiente = viewModel.informeJson()
+                        guardarInforme.launch(viewModel.nombreArchivo())
+                    },
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                ) {
+                    Icon(Icons.Filled.Share, contentDescription = null)
+                    Text("  Exportar informe (JSON)")
+                }
+            }
             Acciones(item, acciones, puedeEditar, buscandoUbicacion, onAccion = viewModel::onAccion,
                 onCheckIn = onCheckIn, onEditar = onEditar, onDiagnostico = onDiagnostico)
         }

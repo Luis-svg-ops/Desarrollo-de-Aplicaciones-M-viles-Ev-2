@@ -14,6 +14,9 @@ import cl.duoc.acis.model.OtConDetalle
 import cl.duoc.acis.model.Rol
 import cl.duoc.acis.repository.OrdenTrabajoRepository
 import cl.duoc.acis.util.GestorCheckIn
+import cl.duoc.acis.util.InformeJson
+import cl.duoc.acis.util.crearInforme
+import cl.duoc.acis.util.nombreArchivoInforme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -133,6 +136,22 @@ class DetalleOtViewModel(
      */
     fun hacerCheckIn() {
         checkIns.iniciar(otId, usuarioId)?.let { _mensaje.value = it }
+    }
+
+    // ---- Informe en JSON (HU-26) ----
+    /** El jefe y el cliente pueden exportar el informe cuando el trabajo ya terminó (Cerrada o Conforme). */
+    val puedeExportar: StateFlow<Boolean> = detalle
+        .map { d -> d != null && rol in setOf(Rol.JEFE, Rol.CLIENTE) && d.ot.estado in setOf(EstadoOT.CERRADA, EstadoOT.CONFORME) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    /** El informe convertido a JSON con Gson (o null si la OT todavía no carga). */
+    fun informeJson(): String? = detalle.value?.let { InformeJson.aJson(crearInforme(it, historial.value)) }
+
+    fun nombreArchivo(): String = nombreArchivoInforme(detalle.value?.ot?.numero ?: "OT")
+
+    /** La pantalla avisa el resultado de guardar el archivo con el mismo Snackbar. */
+    fun avisar(texto: String) {
+        _mensaje.value = texto
     }
 
     fun mensajeMostrado() {

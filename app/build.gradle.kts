@@ -54,6 +54,8 @@ dependencies {
     // Base de datos local (Room), igual que el ejemplo del curso
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    // Gson: convierte objetos Kotlin a JSON y de vuelta (informe de la OT)
+    implementation(libs.gson)
     ksp(libs.androidx.room.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
