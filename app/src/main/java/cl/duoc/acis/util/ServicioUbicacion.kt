@@ -14,16 +14,25 @@ import java.util.Locale
 import kotlin.coroutines.resume
 
 /**
+ * Lo que el check-in necesita del GPS. Es una interfaz para poder probar el check-in
+ * con una ubicación falsa, sin GPS real.
+ */
+interface FuenteUbicacion {
+    fun estaActivada(): Boolean
+    suspend fun obtener(): Location?
+}
+
+/**
  * Lee la ubicación del teléfono UNA sola vez (para el check-in). No sigue al técnico durante el día.
  * Usa LocationManager de Android: no necesita librerías extra ni Google Play Services,
  * por eso funciona en cualquier emulador. Recibe el applicationContext, no una pantalla.
  */
-class ServicioUbicacion(context: Context) {
+class ServicioUbicacion(context: Context) : FuenteUbicacion {
 
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
     /** ¿Está encendida la ubicación del teléfono (GPS o red)? */
-    fun estaActivada(): Boolean =
+    override fun estaActivada(): Boolean =
         locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
                 locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
 
@@ -32,7 +41,7 @@ class ServicioUbicacion(context: Context) {
      * La pantalla ya revisó el permiso antes de llamar a esta función.
      */
     @SuppressLint("MissingPermission")
-    suspend fun obtener(): Location? {
+    override suspend fun obtener(): Location? {
         val proveedor = if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
             LocationManager.GPS_PROVIDER else LocationManager.NETWORK_PROVIDER
 

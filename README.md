@@ -13,7 +13,7 @@ Hecha con Kotlin, Jetpack Compose y Material 3. Los datos se guardan en el celul
 **Técnico**
 - Ve sus OT del día, con la próxima visita destacada y filtros (Pendientes, En ejecución, Cerradas).
 - Acepta o rechaza una OT asignada (el rechazo pide motivo).
-- Hace **check-in con GPS** al llegar al local: se guardan la hora y las coordenadas.
+- Hace **check-in con GPS** al llegar al local: se guardan la hora y las coordenadas. El check-in corre **en segundo plano** (corrutina): puede volver a la lista mientras se obtiene la ubicación.
 - Registra una visita fallida si no pudo atender (con motivo).
 - Escribe el diagnóstico y las actividades, toma una **foto de evidencia** con la cámara y hace el **check-out**.
 - Consulta el historial de OT de cada local.
@@ -104,7 +104,7 @@ app/src/main/java/cl/duoc/acis/
 
 ## Tests
 
-45 tests unitarios en `app/src/test`, que corren sin emulador:
+47 tests unitarios en `app/src/test`, que corren sin emulador:
 
 - `MaquinaEstadosOTTest` (21): rutas permitidas y prohibidas de la OT, conformidad, cliente sin acciones, estados finales, ningún estado huérfano y que el formulario de edición nunca invente una ruta.
 - `ValidacionesTest` (14): correo, contraseña, fechas, descripción, diagnóstico, foto y datos del equipo.
@@ -113,7 +113,7 @@ app/src/main/java/cl/duoc/acis/
 - `PasoAlcanzadoTest` (3): hasta qué paso llegó una OT detenida.
 - `DuracionTest` (3): duración de la atención ("menos de 1 min", "45 min", "1 h 20 min").
 
-Además, **24 pruebas de rutas en el emulador** (`app/src/androidTest/.../RutasOtTest.kt` y `RutasExtraTest.kt`) recorren con la base de datos real cada camino de una OT (principal, rechazo, visita fallida, postergar y cancelar, sin técnico, reasignaciones, acciones repetidas o prohibidas, varias disconformidades, borrado de equipos y vista del cliente) y revisan en cada paso quién ve la OT y qué botones tiene cada rol:
+Además, **29 pruebas en el emulador** (`RutasOtTest`, `RutasExtraTest` y `GestorCheckInTest`, en `app/src/androidTest/`) recorren con la base de datos real cada camino de una OT (principal, rechazo, visita fallida, postergar y cancelar, sin técnico, reasignaciones, acciones repetidas o prohibidas, varias disconformidades, borrado de equipos y vista del cliente) y revisan en cada paso quién ve la OT y qué botones tiene cada rol:
 
 ```
 ./gradlew connectedDebugAndroidTest
