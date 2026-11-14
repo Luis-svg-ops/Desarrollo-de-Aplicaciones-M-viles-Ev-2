@@ -113,8 +113,12 @@ app/src/main/java/cl/duoc/acis/
 - `PasoAlcanzadoTest` (3): hasta qué paso llegó una OT detenida.
 - `DuracionTest` (3): duración de la atención ("menos de 1 min", "45 min", "1 h 20 min").
 
-Además, **29 pruebas en el emulador** (`RutasOtTest`, `RutasExtraTest` y `GestorCheckInTest`, en `app/src/androidTest/`) recorren con la base de datos real cada camino de una OT (principal, rechazo, visita fallida, postergar y cancelar, sin técnico, reasignaciones, acciones repetidas o prohibidas, varias disconformidades, borrado de equipos y vista del cliente) y revisan en cada paso quién ve la OT y qué botones tiene cada rol:
+Además, **53 pruebas en el emulador** (`RutasOtTest`, `RutasExtraTest`, `GestorCheckInTest` y `CriteriosAceptacionTest`, en `app/src/androidTest/`) recorren con la base de datos real cada camino de una OT (principal, rechazo, visita fallida, postergar y cancelar, sin técnico, reasignaciones, acciones repetidas o prohibidas, varias disconformidades, borrado de equipos y vista del cliente) y revisan en cada paso quién ve la OT y qué botones tiene cada rol:
 
 ```
 ./gradlew connectedDebugAndroidTest
 ```
+
+### Pruebas de aceptación (Dado / Cuando / Entonces)
+
+`CriteriosAceptacionTest` tiene una prueba por cada escenario de los criterios de aceptación de las historias de usuario terminadas, escritas como **Dado / Cuando / Entonces** (Given / When / Then, equivalente a Arrange / Act / Assert). La hoja **Trazabilidad** del Excel de requerimientos indica qué prueba cubre cada escenario.
