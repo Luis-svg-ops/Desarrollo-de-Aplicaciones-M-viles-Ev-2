@@ -53,6 +53,7 @@ import cl.duoc.acis.model.Rol
 import cl.duoc.acis.repository.EquipoRepository
 import cl.duoc.acis.repository.LocalRepository
 import cl.duoc.acis.repository.OrdenTrabajoRepository
+import cl.duoc.acis.util.GestorCheckIn
 import cl.duoc.acis.util.ServicioUbicacion
 import cl.duoc.acis.repository.UsuarioRepository
 import cl.duoc.acis.view.DetalleOtScreen
@@ -94,6 +95,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     val usuarioRepository = remember { UsuarioRepository(database.usuarioDao()) }
     val ordenTrabajoRepository = remember { OrdenTrabajoRepository(database.ordenTrabajoDao(), database.equipoDao(), database.eventoDao(), database.usuarioDao()) }
     val ubicacion = remember { ServicioUbicacion(context.applicationContext) }
+    // Check-in en segundo plano: una sola instancia para toda la app
+    val checkIns = remember { GestorCheckIn.obtener(ordenTrabajoRepository, ubicacion) }
     val localRepository = remember { LocalRepository(database.localDao()) }
     val equipoRepository = remember { EquipoRepository(database.equipoDao(), database.ordenTrabajoDao()) }
 
@@ -225,7 +228,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             ) { backStack ->
                 val otId = backStack.arguments?.getLong("otId") ?: 0L
                 val detalleViewModel: DetalleOtViewModel = viewModel(
-                    factory = fabrica { DetalleOtViewModel(ordenTrabajoRepository, otId, rol ?: Rol.TECNICO, usuarioId, ubicacion) }
+                    factory = fabrica { DetalleOtViewModel(ordenTrabajoRepository, otId, rol ?: Rol.TECNICO, usuarioId, checkIns) }
                 )
                 DetalleOtScreen(
                     viewModel = detalleViewModel,

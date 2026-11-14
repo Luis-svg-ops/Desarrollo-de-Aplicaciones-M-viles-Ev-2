@@ -18,6 +18,21 @@ import kotlinx.coroutines.flow.stateIn
 /** Un filtro de la lista: su nombre y qué estados incluye (null = todos). */
 data class FiltroOt(val texto: String, val estados: Set<EstadoOT>?)
 
+// OT que ya terminaron su trabajo: se ordenan de la más reciente a la más antigua
+private val TERMINADAS = setOf(EstadoOT.CERRADA, EstadoOT.CONFORME, EstadoOT.CANCELADA)
+
+/**
+ * Orden de las listas de OT:
+ * - primero las abiertas, de la más próxima a la más lejana (lo que hay que atender primero);
+ * - después las terminadas, de la más reciente a la más antigua (el último trabajo arriba).
+ * Las terminadas usan la hora del check-out si la tienen; si no (canceladas), la fecha programada.
+ */
+fun ordenarPorFecha(lista: List<OtConDetalle>): List<OtConDetalle> {
+    val (terminadas, abiertas) = lista.partition { it.ot.estado in TERMINADAS }
+    return abiertas.sortedBy { it.ot.fechaProgramada } +
+            terminadas.sortedByDescending { it.ot.checkOutFechaHora ?: it.ot.fechaProgramada }
+}
+
 class ListaOtViewModel(
     repository: OrdenTrabajoRepository,
     usuarioId: Long,
@@ -54,7 +69,7 @@ class ListaOtViewModel(
     /** Las OT que pasan el filtro elegido. */
     val otsFiltradas: StateFlow<List<OtConDetalle>> = combine(todas, _filtroSeleccionado) { lista, indice ->
         val estados = filtros[indice].estados
-        if (estados == null) lista else lista.filter { it.ot.estado in estados }
+        ordenarPorFecha(if (estados == null) lista else lista.filter { it.ot.estado in estados })
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /** Cuántas OT hay en cada filtro (el número al lado de cada pestaña o chip). */
