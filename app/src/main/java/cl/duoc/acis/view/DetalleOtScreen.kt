@@ -65,6 +65,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import cl.duoc.acis.model.AccionOT
+import cl.duoc.acis.model.MaquinaEstadosOT
+import androidx.compose.material3.OutlinedTextField
 import cl.duoc.acis.model.EstadoOT
 import cl.duoc.acis.model.OtConDetalle
 import cl.duoc.acis.util.fechaHoraCorta
@@ -172,6 +174,8 @@ fun DetalleOtScreen(
             elegido = viewModel.motivo,
             error = motivoError,
             onElegir = viewModel::onMotivoChange,
+            textoOtro = viewModel.motivoOtro,
+            onTextoOtro = viewModel::onMotivoOtroChange,
             onConfirmar = viewModel::confirmarMotivo,
             onCerrar = viewModel::cerrarDialogo
         )
@@ -399,6 +403,8 @@ private fun DialogoMotivo(
     elegido: String?,
     error: String?,
     onElegir: (String) -> Unit,
+    textoOtro: String,
+    onTextoOtro: (String) -> Unit,
     onConfirmar: () -> Unit,
     onCerrar: () -> Unit
 ) {
@@ -409,7 +415,7 @@ private fun DialogoMotivo(
         text = {
             Column {
                 Text("Selecciona el motivo:", style = MaterialTheme.typography.bodyMedium)
-                accion.motivos.forEach { m ->
+                (accion.motivos + MaquinaEstadosOT.MOTIVO_OTRO).forEach { m ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
@@ -420,6 +426,18 @@ private fun DialogoMotivo(
                         RadioButton(selected = m == elegido, onClick = null)
                         Text(m, modifier = Modifier.padding(start = 8.dp))
                     }
+                }
+                // "Otro": aparece un campo para escribir el motivo propio
+                AnimatedVisibility(visible = elegido == MaquinaEstadosOT.MOTIVO_OTRO) {
+                    OutlinedTextField(
+                        value = textoOtro,
+                        onValueChange = onTextoOtro,
+                        label = { Text("Escribe el motivo") },
+                        supportingText = { Text("${textoOtro.trim().length}/${MaquinaEstadosOT.MAX_MOTIVO_OTRO}") },
+                        isError = error != null,
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
                 if (error != null) {
                     Row(verticalAlignment = Alignment.CenterVertically) {

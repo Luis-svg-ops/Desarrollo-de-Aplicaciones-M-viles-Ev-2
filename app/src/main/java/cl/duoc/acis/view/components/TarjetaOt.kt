@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cl.duoc.acis.model.OtConDetalle
 import cl.duoc.acis.model.UbicacionEquipo
+import cl.duoc.acis.util.duracionAtencion
 import cl.duoc.acis.util.fechaHoraCorta
 
 /**
@@ -74,6 +75,14 @@ fun TarjetaOt(item: OtConDetalle, mostrarTecnico: Boolean, onClick: () -> Unit, 
                         modifier = Modifier.weight(1f)
                     )
                     EstadoTexto(ot.estado, paraCliente = paraCliente)
+                }
+                // Cuánto se demoró el técnico (check-in → check-out): el jefe lo ve sin abrir la OT
+                duracionAtencion(ot)?.let {
+                    Text(
+                        "Duración de la atención: $it",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }

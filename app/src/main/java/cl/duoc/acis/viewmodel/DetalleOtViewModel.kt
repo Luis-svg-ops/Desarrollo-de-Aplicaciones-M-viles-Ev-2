@@ -86,6 +86,7 @@ class DetalleOtViewModel(
     fun onAccion(accion: AccionOT) {
         if (accion.pideMotivo) {
             motivo = null
+            motivoOtro = ""
             _motivoError.value = null
             _accionConMotivo.value = accion
         } else {
@@ -98,14 +99,28 @@ class DetalleOtViewModel(
         _motivoError.value = null
     }
 
+    /** Texto libre cuando se elige "Otro". */
+    var motivoOtro by mutableStateOf("")
+        private set
+
+    fun onMotivoOtroChange(nuevo: String) {
+        motivoOtro = nuevo
+        _motivoError.value = null
+    }
+
     fun confirmarMotivo() {
         val accion = _accionConMotivo.value ?: return
-        if (motivo == null) {
+        val elegido = motivo
+        if (elegido == null) {
             _motivoError.value = "Selecciona un motivo"
             return
         }
+        val final = if (elegido == MaquinaEstadosOT.MOTIVO_OTRO) {
+            MaquinaEstadosOT.validarMotivoOtro(motivoOtro)?.let { _motivoError.value = it; return }
+            "${MaquinaEstadosOT.MOTIVO_OTRO}: ${motivoOtro.trim()}"
+        } else elegido
         _accionConMotivo.value = null
-        aplicar(accion, motivo)
+        aplicar(accion, final)
     }
 
     fun cerrarDialogo() {

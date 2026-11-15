@@ -106,14 +106,14 @@ app/src/main/java/cl/duoc/acis/
 
 ## Tests
 
-51 tests unitarios en `app/src/test`, que corren sin emulador:
+55 tests unitarios en `app/src/test`, que corren sin emulador:
 
-- `MaquinaEstadosOTTest` (21): rutas permitidas y prohibidas de la OT, conformidad, cliente sin acciones, estados finales, ningún estado huérfano y que el formulario de edición nunca invente una ruta.
+- `MaquinaEstadosOTTest` (24): rutas permitidas y prohibidas de la OT, conformidad, motivo "Otro" escrito a mano, cliente sin acciones, estados finales, ningún estado huérfano y que el formulario de edición nunca invente una ruta.
 - `ValidacionesTest` (14): correo, contraseña, fechas, descripción, diagnóstico, foto y datos del equipo.
 - `UbicacionTest` (1): formato de las coordenadas.
 - `InicialesTest` (1): iniciales del avatar del perfil.
 - `PasoAlcanzadoTest` (3): hasta qué paso llegó una OT detenida.
-- `DuracionTest` (3): duración de la atención ("menos de 1 min", "45 min", "1 h 20 min").
+- `DuracionTest` (4): duración de la atención ("menos de 1 min", "45 min", "1 h 20 min") y que la tarjeta solo la muestre si hay check-in y check-out.
 
 Además, **54 pruebas en el emulador** (`RutasOtTest`, `RutasExtraTest`, `GestorCheckInTest` y `CriteriosAceptacionTest`, en `app/src/androidTest/`) recorren con la base de datos real cada camino de una OT (principal, rechazo, visita fallida, postergar y cancelar, sin técnico, reasignaciones, acciones repetidas o prohibidas, varias disconformidades, borrado de equipos y vista del cliente) y revisan en cada paso quién ve la OT y qué botones tiene cada rol:
 

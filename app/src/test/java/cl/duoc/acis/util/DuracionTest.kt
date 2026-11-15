@@ -22,4 +22,16 @@ class DuracionTest {
         assertEquals("1 h 20 min", formatoDuracion(80 * minuto))
         assertEquals("2 h", formatoDuracion(120 * minuto))
     }
+
+    @Test
+    fun duracionDeLaOt_soloSiTieneCheckInYCheckOut() {
+        val ot = cl.duoc.acis.model.OrdenTrabajo(
+            numero = "OT-1", localId = 1, equipoId = 1, tipo = cl.duoc.acis.model.TipoOT.CORRECTIVA,
+            prioridad = cl.duoc.acis.model.Prioridad.MEDIA, estado = cl.duoc.acis.model.EstadoOT.CERRADA,
+            descripcion = "Prueba", fechaCreacion = 0, fechaProgramada = 0,
+            checkInFechaHora = 10 * minuto, checkOutFechaHora = 62 * minuto
+        )
+        assertEquals("52 min", duracionAtencion(ot))
+        assertEquals(null, duracionAtencion(ot.copy(checkOutFechaHora = null)))
+    }
 }
