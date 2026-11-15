@@ -42,3 +42,10 @@ fun formatoDuracion(milisegundos: Long): String {
         else -> "${minutos / 60} h ${minutos % 60} min"
     }
 }
+
+/** Duración de la atención de una OT, o null si todavía no tiene check-in y check-out. */
+fun duracionAtencion(ot: cl.duoc.acis.model.OrdenTrabajo): String? {
+    val inicio = ot.checkInFechaHora ?: return null
+    val fin = ot.checkOutFechaHora ?: return null
+    return formatoDuracion(fin - inicio)
+}

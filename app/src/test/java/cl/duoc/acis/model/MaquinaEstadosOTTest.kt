@@ -160,4 +160,24 @@ class MaquinaEstadosOTTest {
         EstadoOT.entries.forEach { assertTrue(MaquinaEstadosOT.accionesDisponibles(it, Rol.CLIENTE).isEmpty()) }
         assertNotNull(MaquinaEstadosOT.validar(AccionOT.CANCELAR, EstadoOT.ASIGNADA, Rol.CLIENTE, "OT duplicada"))
     }
+
+    // ---- Motivo "Otro" (texto libre) ----
+
+    @Test
+    fun motivoOtroEscritoEsValido() {
+        assertNull(MaquinaEstadosOT.validar(AccionOT.DISCONFORMIDAD, EstadoOT.CERRADA, Rol.JEFE, "Otro: Falta limpiar la zona"))
+    }
+
+    @Test
+    fun motivoOtroVacioNoEsValido() {
+        assertEquals("Motivo no válido", MaquinaEstadosOT.validar(AccionOT.DISCONFORMIDAD, EstadoOT.CERRADA, Rol.JEFE, "Otro: "))
+    }
+
+    @Test
+    fun validarTextoDeOtro() {
+        assertEquals("Escribe el motivo", MaquinaEstadosOT.validarMotivoOtro("   "))
+        assertEquals("Escribe al menos 5 caracteres", MaquinaEstadosOT.validarMotivoOtro("abc"))
+        assertEquals("Máximo 80 caracteres", MaquinaEstadosOT.validarMotivoOtro("x".repeat(81)))
+        assertNull(MaquinaEstadosOT.validarMotivoOtro("El local estaba cerrado"))
+    }
 }

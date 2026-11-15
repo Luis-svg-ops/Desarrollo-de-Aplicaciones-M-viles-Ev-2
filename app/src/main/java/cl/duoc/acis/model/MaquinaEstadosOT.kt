@@ -108,7 +108,24 @@ object MaquinaEstadosOT {
         rol == Rol.TECNICO && tecnicoDeLaOt != usuarioId -> "Esta OT no está asignada a ti"
         estado !in accion.desde -> "Acción no permitida: la OT está ${estado.texto.lowercase()}"
         accion.pideMotivo && motivo.isNullOrBlank() -> "Selecciona un motivo"
-        accion.pideMotivo && motivo !in accion.motivos -> "Motivo no válido"
+        accion.pideMotivo && motivo !in accion.motivos && !esMotivoOtro(motivo) -> "Motivo no válido"
+        else -> null
+    }
+
+    /** Opción "Otro" del diálogo: el usuario escribe su propio motivo. Se guarda como "Otro: texto". */
+    const val MOTIVO_OTRO = "Otro"
+    const val MAX_MOTIVO_OTRO = 80
+
+    fun esMotivoOtro(motivo: String?): Boolean {
+        val texto = motivo?.removePrefix("$MOTIVO_OTRO: ") ?: return false
+        return motivo.startsWith("$MOTIVO_OTRO: ") && texto.isNotBlank() && texto.length <= MAX_MOTIVO_OTRO
+    }
+
+    /** Valida el texto escrito en "Otro" (mismo estilo que util/Validaciones). */
+    fun validarMotivoOtro(texto: String): String? = when {
+        texto.isBlank() -> "Escribe el motivo"
+        texto.trim().length < 5 -> "Escribe al menos 5 caracteres"
+        texto.trim().length > MAX_MOTIVO_OTRO -> "Máximo $MAX_MOTIVO_OTRO caracteres"
         else -> null
     }
 
