@@ -1,0 +1,8 @@
+target/
+.mvn/wrapper/maven-wrapper.jar
+# Base de datos local (se crea sola al iniciar)
+data/
+.idea
+*.iml
+.vscode/
+HELP.md
