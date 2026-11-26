@@ -4,5 +4,7 @@ package cl.duoc.acis.model
 enum class Rol(val texto: String) {
     TECNICO("Técnico de terreno"),
     JEFE("Jefe de mantenimiento"),
-    CLIENTE("Cliente")
+    CLIENTE("Cliente"),
+    // Gestiona usuarios (crea técnicos y jefes, aprueba clientes). Llega desde ms-auth
+    ADMIN("Administrador")
 }

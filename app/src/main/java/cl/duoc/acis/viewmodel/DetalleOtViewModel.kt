@@ -134,6 +134,8 @@ class DetalleOtViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     init {
+        // Historial actualizado desde el servidor (si no hay señal, queda el guardado)
+        viewModelScope.launch { repository.sincronizarHistorial(otId) }
         // Cuando el check-in termina (aunque haya empezado antes de abrir esta pantalla), se muestra el resultado
         viewModelScope.launch {
             checkIns.resultados.collect { resultados ->

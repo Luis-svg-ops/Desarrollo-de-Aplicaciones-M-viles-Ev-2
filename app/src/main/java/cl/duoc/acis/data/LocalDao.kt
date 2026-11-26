@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import androidx.room.Update
 import cl.duoc.acis.model.Local
 import kotlinx.coroutines.flow.Flow
@@ -21,4 +22,7 @@ interface LocalDao {
 
     @Update
     suspend fun update(local: Local)
+
+    @Upsert
+    suspend fun upsertAll(locales: List<Local>)
 }

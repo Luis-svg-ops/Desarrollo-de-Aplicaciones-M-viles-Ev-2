@@ -63,6 +63,8 @@ fun ListaOtScreen(
     val conteos by viewModel.conteos.collectAsState()
     val filtroSeleccionado by viewModel.filtroSeleccionado.collectAsState()
     val proximaVisita by viewModel.proximaVisita.collectAsState()
+    val aviso by viewModel.aviso.collectAsState()
+    val sincronizando by viewModel.sincronizando.collectAsState()
 
     Scaffold(
         topBar = { AcisTopBar(if (esJefe) "Órdenes de trabajo" else if (esCliente) "OT de mi local" else "Mis OT del día") },
@@ -116,6 +118,12 @@ fun ListaOtScreen(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = if (esJefe) 96.dp else 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Aviso de conexión: si no hay señal se muestran los datos guardados en Room
+                if (aviso != null || sincronizando) {
+                    item {
+                        AvisoConexion(texto = aviso ?: "Actualizando…", cargando = sincronizando, onReintentar = viewModel::refrescar)
+                    }
+                }
                 if (!esJefe && !esCliente) {
                     item { ProximaVisita(proximaVisita, onVerOt) }
                 }
@@ -185,6 +193,26 @@ private fun ProximaVisita(item: OtConDetalle?, onVerOt: (Long) -> Unit) {
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(56.dp)
                     ) { Text(textoBoton) }
                 }
+            }
+        }
+    }
+}
+
+/** Franja que avisa que no hay conexión (o que se está actualizando), con un botón para reintentar. */
+@Composable
+private fun AvisoConexion(texto: String, cargando: Boolean, onReintentar: () -> Unit) {
+    androidx.compose.material3.Surface(
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+            if (cargando) {
+                androidx.compose.material3.CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.padding(end = 10.dp).size(18.dp))
+            }
+            Text(texto, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+            if (!cargando) {
+                androidx.compose.material3.TextButton(onClick = onReintentar) { Text("Reintentar") }
             }
         }
     }

@@ -3,6 +3,17 @@ package cl.duoc.acis.repository
 import cl.duoc.acis.data.EquipoDao
 import cl.duoc.acis.data.EventoDao
 import cl.duoc.acis.data.UsuarioDao
+import cl.duoc.acis.data.LocalDao
+import cl.duoc.acis.data.remote.AccionRequest
+import cl.duoc.acis.data.remote.CheckInRequest
+import cl.duoc.acis.data.remote.CierreRequest
+import cl.duoc.acis.data.remote.OrdenesApi
+import cl.duoc.acis.data.remote.OtDto
+import cl.duoc.acis.data.remote.Resultado
+import cl.duoc.acis.data.remote.aEntidad
+import cl.duoc.acis.data.remote.aPedido
+import cl.duoc.acis.data.remote.llamarApi
+import cl.duoc.acis.data.remote.tecnicoDeOt
 import cl.duoc.acis.model.EstadoOT
 import cl.duoc.acis.model.EventoOT
 import cl.duoc.acis.data.OrdenTrabajoDao
@@ -21,8 +32,70 @@ class OrdenTrabajoRepository(
     private val equipoDao: EquipoDao,
     // Historial de cambios de cada OT y nombres de quién los hizo
     private val eventoDao: EventoDao,
-    private val usuarioDao: UsuarioDao
+    private val usuarioDao: UsuarioDao,
+    private val localDao: LocalDao? = null,
+    /**
+     * ms-ordenes. Si está, el servidor es la fuente de la verdad y Room guarda una copia.
+     * Si es null (pruebas sin servidor), todo funciona solo con Room, como antes.
+     */
+    private val remoto: OrdenesApi? = null
 ) {
+
+    // ---------- Copia local de lo que entrega el servidor ----------
+
+    /** Guarda en Room una OT que llegó del servidor, con su local, equipo y técnico (en ese orden por las llaves foráneas). */
+    private suspend fun guardarCopia(dto: OtDto) {
+        localDao?.upsertAll(listOf(dto.local.aEntidad()))
+        equipoDao.upsertAll(listOf(dto.equipo.aEntidad()))
+        dto.tecnicoId?.let { id -> if (usuarioDao.getById(id) == null) usuarioDao.upsert(tecnicoDeOt(id, dto.tecnicoNombre)) }
+        ordenTrabajoDao.upsertAll(listOf(dto.aEntidad()))
+    }
+
+    /**
+     * Trae del servidor las OT que le corresponden al usuario (el servidor filtra con el token)
+     * y deja Room igual. Devuelve el error, o null si se sincronizó. Si no hay señal, Room
+     * conserva la última copia: el técnico igual ve sus OT.
+     */
+    suspend fun sincronizar(): Resultado<Unit> {
+        val api = remoto ?: return Resultado.Exito(Unit)
+        return when (val r = llamarApi { api.ordenes() }) {
+            is Resultado.Error -> r
+            is Resultado.Exito -> {
+                r.datos.forEach { guardarCopia(it) }
+                val ids = r.datos.map { it.id }
+                eventoDao.borrarExcepto(ids)
+                ordenTrabajoDao.borrarExcepto(ids)
+                Resultado.Exito(Unit)
+            }
+        }
+    }
+
+    /** Trae el historial de una OT desde el servidor (si no hay señal, se muestra el guardado). */
+    suspend fun sincronizarHistorial(otId: Long) {
+        val api = remoto ?: return
+        val r = llamarApi { api.historial(otId) }
+        if (r is Resultado.Exito) {
+            eventoDao.borrarDeOt(otId)
+            eventoDao.insertAll(r.datos.map { it.aEntidad(otId) })
+        }
+    }
+
+    /** Llama al servidor; si responde bien guarda la OT en Room y devuelve null, si no, el mensaje de error. */
+    private suspend fun enServidor(llamada: suspend (OrdenesApi) -> OtDto): String? {
+        val api = remoto ?: return "Sin servidor configurado"
+        return when (val r = llamarApi { llamada(api) }) {
+            is Resultado.Error -> r.mensaje
+            is Resultado.Exito -> {
+                guardarCopia(r.datos)
+                sincronizarHistorial(r.datos.id)
+                null
+            }
+        }
+    }
+
+    /** OT nueva desde el formulario: al servidor si hay; si no, solo en Room. Devuelve el error o null. */
+    suspend fun guardarNueva(ot: OrdenTrabajo): String? =
+        if (remoto != null) enServidor { it.crear(ot.aPedido()) } else { crear(ot); null }
 
     /** Línea de tiempo de la OT: qué pasó, cuándo y quién. */
     fun getHistorial(otId: Long): Flow<List<EventoOT>> = eventoDao.getByOt(otId)
@@ -52,7 +125,7 @@ class OrdenTrabajoRepository(
 
     /** El Jefe ve todas las OT; el Técnico, solo las que tiene asignadas. */
     fun getParaUsuario(usuarioId: Long, rol: Rol, localId: Long? = null): Flow<List<OtConDetalle>> = when (rol) {
-        Rol.JEFE -> ordenTrabajoDao.getAllConDetalle()
+        Rol.JEFE, Rol.ADMIN -> ordenTrabajoDao.getAllConDetalle()
         Rol.TECNICO -> ordenTrabajoDao.getByTecnicoConDetalle(usuarioId)
         // El cliente solo ve las OT de su local
         Rol.CLIENTE -> ordenTrabajoDao.getByLocalConDetalle(localId ?: -1)
@@ -88,6 +161,7 @@ class OrdenTrabajoRepository(
      * Devuelve el mensaje de error o null si se guardó.
      */
     suspend fun actualizar(ot: OrdenTrabajo): String? {
+        if (remoto != null) return enServidor { it.editar(ot.id, ot.aPedido()) }
         val actual = ordenTrabajoDao.getById(ot.id).first() ?: return "La OT ya no existe"
         if (!MaquinaEstadosOT.sePuedeEditar(actual.estado)) {
             return "Una OT ${actual.estado.texto.lowercase()} no se puede editar"
@@ -128,6 +202,8 @@ class OrdenTrabajoRepository(
         // Datos extra que se guardan junto con el cambio (por ejemplo, las coordenadas del check-in)
         datos: (OrdenTrabajo) -> OrdenTrabajo = { it }
     ): String? {
+        // Con servidor: él valida con su propia máquina de estados ("nunca confíes en el cliente")
+        if (remoto != null) return enServidor { it.accion(otId, AccionRequest(accion.name, motivo)) }
         val actual = ordenTrabajoDao.getById(otId).first() ?: return "La OT ya no existe"
         MaquinaEstadosOT.validar(accion, actual.estado, rol, motivo, actual.tecnicoId, usuarioId)?.let { return it }
         val cambiada = actual.copy(
@@ -143,7 +219,8 @@ class OrdenTrabajoRepository(
 
     /** Check-in: la OT pasa a En ejecución y se guardan la hora real y dónde estaba el técnico. */
     suspend fun checkIn(otId: Long, usuarioId: Long, lat: Double, lon: Double): String? =
-        aplicar(otId, AccionOT.CHECK_IN, Rol.TECNICO, usuarioId) {
+        if (remoto != null) enServidor { it.checkIn(otId, CheckInRequest(lat, lon)) }
+        else aplicar(otId, AccionOT.CHECK_IN, Rol.TECNICO, usuarioId) {
             it.copy(checkInFechaHora = System.currentTimeMillis(), checkInLat = lat, checkInLon = lon)
         }
 
@@ -156,6 +233,9 @@ class OrdenTrabajoRepository(
         materiales: String,
         fotoUri: String
     ): String? {
+        if (remoto != null) {
+            return enServidor { it.cierre(otId, CierreRequest(diagnostico, actividades, materiales.ifBlank { null }, fotoUri)) }
+        }
         val ahora = System.currentTimeMillis()
         val error = aplicar(otId, AccionOT.CERRAR, Rol.TECNICO, usuarioId) {
             it.copy(
