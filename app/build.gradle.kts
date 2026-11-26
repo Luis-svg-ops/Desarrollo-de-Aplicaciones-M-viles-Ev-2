@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -25,11 +27,31 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // ---- Firma del APK (EFT): la llave y su configuración están en la carpeta keystore/ ----
+    val propiedadesFirma = Properties().apply {
+        val archivo = rootProject.file("keystore/keystore.properties")
+        if (archivo.exists()) archivo.inputStream().use { load(it) }
+    }
+    signingConfigs {
+        create("release") {
+            // Las variables de entorno tienen prioridad: así, en producción, las claves no van en el repo
+            storeFile = rootProject.file("keystore/" + (System.getenv("ACIS_STORE_FILE") ?: propiedadesFirma.getProperty("storeFile", "acis-release.jks")))
+            storePassword = System.getenv("ACIS_STORE_PASSWORD") ?: propiedadesFirma.getProperty("storePassword")
+            keyAlias = System.getenv("ACIS_KEY_ALIAS") ?: propiedadesFirma.getProperty("keyAlias")
+            keyPassword = System.getenv("ACIS_KEY_PASSWORD") ?: propiedadesFirma.getProperty("keyPassword")
+        }
+    }
+
     buildTypes {
         release {
+            // Compilación segura: R8 achica y ofusca el código (más difícil de copiar o modificar)
             optimization {
-                enable = false
+                enable = true
+                keepRules {
+                    files.add(file("proguard-rules.pro"))
+                }
             }
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
