@@ -56,6 +56,9 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     // Gson: convierte objetos Kotlin a JSON y de vuelta (informe de la OT)
     implementation(libs.gson)
+    // Retrofit: consumo de los microservicios y de la API externa
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson)
     ksp(libs.androidx.room.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

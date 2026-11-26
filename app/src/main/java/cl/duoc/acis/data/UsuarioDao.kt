@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import cl.duoc.acis.model.Usuario
 import kotlinx.coroutines.flow.Flow
 
@@ -22,4 +23,11 @@ interface UsuarioDao {
     // ABORT: si el correo ya existe, falla en vez de pisar el usuario anterior
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertAll(usuarios: List<Usuario>)
+
+    // ---- Copia del servidor: @Upsert inserta si no existe y actualiza si ya existe ----
+    @Upsert
+    suspend fun upsert(usuario: Usuario)
+
+    @Upsert
+    suspend fun upsertAll(usuarios: List<Usuario>)
 }

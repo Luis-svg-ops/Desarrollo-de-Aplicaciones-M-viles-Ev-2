@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import cl.duoc.acis.model.EventoOT
 import kotlinx.coroutines.flow.Flow
 
@@ -19,4 +20,10 @@ interface EventoDao {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertAll(eventos: List<EventoOT>)
+
+    @Query("DELETE FROM eventos_ot WHERE otId = :otId")
+    suspend fun borrarDeOt(otId: Long)
+
+    @Query("DELETE FROM eventos_ot WHERE otId NOT IN (:ids)")
+    suspend fun borrarExcepto(ids: List<Long>)
 }

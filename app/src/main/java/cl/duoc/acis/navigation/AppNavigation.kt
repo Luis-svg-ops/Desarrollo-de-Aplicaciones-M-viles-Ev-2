@@ -1,5 +1,7 @@
 package cl.duoc.acis.navigation
 
+import cl.duoc.acis.data.remote.ClienteApi
+import cl.duoc.acis.data.remote.Sesion
 import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -92,13 +94,17 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     // Base de datos y repositorios: se crean una sola vez (igual que en el ejemplo del curso)
     val context = LocalContext.current
     val database = remember { AppDatabase.getDatabase(context) }
-    val usuarioRepository = remember { UsuarioRepository(database.usuarioDao()) }
-    val ordenTrabajoRepository = remember { OrdenTrabajoRepository(database.ordenTrabajoDao(), database.equipoDao(), database.eventoDao(), database.usuarioDao()) }
+    // Con los microservicios: cada repositorio recibe su API (Retrofit) y usa Room como copia local
+    val usuarioRepository = remember { UsuarioRepository(database.usuarioDao(), ClienteApi.auth) }
+    val ordenTrabajoRepository = remember {
+        OrdenTrabajoRepository(database.ordenTrabajoDao(), database.equipoDao(), database.eventoDao(), database.usuarioDao(),
+            database.localDao(), ClienteApi.ordenes)
+    }
     val ubicacion = remember { ServicioUbicacion(context.applicationContext) }
     // Check-in en segundo plano: una sola instancia para toda la app
     val checkIns = remember { GestorCheckIn.obtener(ordenTrabajoRepository, ubicacion) }
-    val localRepository = remember { LocalRepository(database.localDao()) }
-    val equipoRepository = remember { EquipoRepository(database.equipoDao(), database.ordenTrabajoDao()) }
+    val localRepository = remember { LocalRepository(database.localDao(), database.equipoDao(), ClienteApi.ordenes) }
+    val equipoRepository = remember { EquipoRepository(database.equipoDao(), database.ordenTrabajoDao(), ClienteApi.ordenes) }
 
     // Sesión: quién inició sesión y con qué rol. Sobrevive a la rotación de pantalla.
     var rol by rememberSaveable { mutableStateOf<Rol?>(null) }
@@ -108,7 +114,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
 
     val entrada by navController.currentBackStackEntryAsState()
     val rutaActual = entrada?.destination?.route
-    val esJefe = rol == Rol.JEFE
+    // El administrador ve las OT y los locales como el jefe (su pantalla de usuarios llega en la fase 4)
+    val esJefe = rol == Rol.JEFE || rol == Rol.ADMIN
     val esCliente = rol == Rol.CLIENTE
 
     val items = if (esCliente) listOf(
@@ -218,6 +225,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 )
                 PerfilScreen(viewModel = perfilViewModel, onCerrarSesion = {
                     rol = null
+                    // Se borra el token: hay que volver a iniciar sesión
+                    Sesion.cerrar()
                     usuarioId = 0L
                     navController.navigate(Rutas.Login.route) { popUpTo(0) { inclusive = true } }
                 })

@@ -118,21 +118,21 @@ class EquipoFormViewModel(
         viewModelScope.launch {
             val base = original
             if (base == null) {
-                repository.crear(
+                val error = repository.guardar(
                     Equipo(
                         localId = localId, tipo = tipo, marca = marca.trim(), modelo = modelo.trim(),
                         ubicacion = ubicacion, fechaUltimaMantencion = fecha
                     )
                 )
-                _terminado.value = "Equipo agregado"
+                if (error != null) _aviso.value = error else _terminado.value = "Equipo agregado"
             } else {
-                repository.actualizar(
+                val error = repository.guardar(
                     base.copy(
                         tipo = tipo, marca = marca.trim(), modelo = modelo.trim(),
                         ubicacion = ubicacion, fechaUltimaMantencion = fecha
                     )
                 )
-                _terminado.value = "Equipo actualizado"
+                if (error != null) _aviso.value = error else _terminado.value = "Equipo actualizado"
             }
         }
     }
@@ -154,6 +154,7 @@ class EquipoFormViewModel(
                     _aviso.value = "No se puede: el equipo tiene OT en curso. Termínalas o cancélalas primero"
                 ResultadoBorrado.DADO_DE_BAJA -> _terminado.value = "Equipo dado de baja (su historial se conserva)"
                 ResultadoBorrado.ELIMINADO -> _terminado.value = "Equipo eliminado"
+                ResultadoBorrado.ERROR -> _aviso.value = "No se pudo eliminar: revisa tu conexión e intenta de nuevo"
             }
         }
     }

@@ -1,5 +1,8 @@
 package cl.duoc.acis.viewmodel
 
+import cl.duoc.acis.data.remote.Resultado
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cl.duoc.acis.model.EstadoOT
@@ -34,18 +37,43 @@ fun ordenarPorFecha(lista: List<OtConDetalle>): List<OtConDetalle> {
 }
 
 class ListaOtViewModel(
-    repository: OrdenTrabajoRepository,
+    private val repository: OrdenTrabajoRepository,
     usuarioId: Long,
     rol: Rol,
     localId: Long? = null
 ) : ViewModel() {
+
+    // ---- Sincronización con ms-ordenes ----
+    // Aviso cuando no hay señal: la lista sigue mostrando la última copia guardada en Room
+    private val _aviso = MutableStateFlow<String?>(null)
+    val aviso: StateFlow<String?> = _aviso.asStateFlow()
+
+    private val _sincronizando = MutableStateFlow(false)
+    val sincronizando: StateFlow<Boolean> = _sincronizando.asStateFlow()
+
+    init {
+        refrescar()
+    }
+
+    /** Pide las OT al servidor. La pantalla no cambia de código: sigue leyendo Room, que se actualiza solo. */
+    fun refrescar() {
+        if (_sincronizando.value) return
+        viewModelScope.launch {
+            _sincronizando.value = true
+            val r = repository.sincronizar()
+            _aviso.value = (r as? Resultado.Error)?.let {
+                if (it.sinConexion) "Sin conexión: mostrando los datos guardados en el teléfono" else it.mensaje
+            }
+            _sincronizando.value = false
+        }
+    }
 
     // El técnico usa pestañas; el jefe, chips con más opciones
     val filtros: List<FiltroOt> = if (rol == Rol.CLIENTE) listOf(
         // El cliente solo distingue lo que sigue abierto de lo terminado
         FiltroOt("En curso", EstadoOT.entries.toSet() - setOf(EstadoOT.CONFORME, EstadoOT.CANCELADA)),
         FiltroOt("Terminadas", setOf(EstadoOT.CONFORME, EstadoOT.CANCELADA)),
-    ) else if (rol == Rol.JEFE) listOf(
+    ) else if (rol == Rol.JEFE || rol == Rol.ADMIN) listOf(
         FiltroOt("Todas", null),
         FiltroOt("Sin asignar", setOf(EstadoOT.CREADA, EstadoOT.RECHAZADA, EstadoOT.VISITA_FALLIDA, EstadoOT.POSTERGADA)),
         FiltroOt("En curso", setOf(EstadoOT.ASIGNADA, EstadoOT.ACEPTADA, EstadoOT.EN_EJECUCION)),

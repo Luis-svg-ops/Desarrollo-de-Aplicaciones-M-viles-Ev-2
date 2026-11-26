@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import androidx.room.Transaction
 import androidx.room.Update
 import cl.duoc.acis.model.OrdenTrabajo
@@ -61,4 +62,11 @@ interface OrdenTrabajoDao {
 
     @Update
     suspend fun update(ot: OrdenTrabajo)
+
+    @Upsert
+    suspend fun upsertAll(ots: List<OrdenTrabajo>)
+
+    /** Al sincronizar: borra las OT que el servidor ya no entrega (por ejemplo, reasignadas a otro técnico). */
+    @Query("DELETE FROM ordenes_trabajo WHERE id NOT IN (:ids)")
+    suspend fun borrarExcepto(ids: List<Long>)
 }

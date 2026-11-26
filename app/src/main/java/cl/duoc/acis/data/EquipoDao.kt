@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import androidx.room.Update
 import cl.duoc.acis.model.Equipo
 import kotlinx.coroutines.flow.Flow
@@ -29,4 +30,7 @@ interface EquipoDao {
 
     @Delete
     suspend fun delete(equipo: Equipo)
+
+    @Upsert
+    suspend fun upsertAll(equipos: List<Equipo>)
 }

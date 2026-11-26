@@ -122,6 +122,8 @@ class OtFormViewModel(
     private var original: OrdenTrabajo? = null
 
     init {
+        // Técnicos activos desde ms-auth (si no hay señal, se usan los guardados)
+        viewModelScope.launch { usuarioRepository.sincronizarTecnicos() }
         if (otId != null) {
             viewModelScope.launch {
                 otRepository.getOt(otId).first()?.let { ot ->
@@ -209,7 +211,7 @@ class OtFormViewModel(
             val base = original
             if (base == null) {
                 // OT nueva: si ya tiene técnico queda Asignada; si no, Creada (lo decide la máquina)
-                otRepository.crear(
+                val error = otRepository.guardarNueva(
                     OrdenTrabajo(
                         numero = "",
                         localId = local,
@@ -223,6 +225,11 @@ class OtFormViewModel(
                         fechaProgramada = programada
                     )
                 )
+                if (error != null) {
+                    _errorGuardar.value = error
+                    _cargando.value = false
+                    return@launch
+                }
             } else {
                 // Edición: el nuevo estado lo decide la máquina de estados (en el repositorio)
                 val error = otRepository.actualizar(

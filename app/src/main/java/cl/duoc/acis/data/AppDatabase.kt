@@ -4,19 +4,15 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
 import cl.duoc.acis.model.Equipo
 import cl.duoc.acis.model.EventoOT
 import cl.duoc.acis.model.Local
 import cl.duoc.acis.model.OrdenTrabajo
 import cl.duoc.acis.model.Usuario
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @Database(
     entities = [Usuario::class, Local::class, Equipo::class, OrdenTrabajo::class, EventoOT::class],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -30,12 +26,6 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
-        private fun cargarDatosEjemplo() {
-            CoroutineScope(Dispatchers.IO).launch {
-                INSTANCE?.let { DatosEjemplo.cargar(it) }
-            }
-        }
-
         // Una sola instancia de la base para toda la app (igual que el ejemplo del curso)
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -46,19 +36,9 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     // Mientras se desarrolla: si cambia una tabla, la base se recrea en vez de cerrarse la app
                     .fallbackToDestructiveMigration(dropAllTables = true)
-                    // Se cargan los datos de ejemplo la primera vez que se crea la base, y también si se
-                    // recreó por un cambio de versión (si no, quedaría vacía y nadie podría entrar)
-                    .addCallback(object : Callback() {
-                        override fun onCreate(db: SupportSQLiteDatabase) {
-                            super.onCreate(db)
-                            cargarDatosEjemplo()
-                        }
-
-                        override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
-                            super.onDestructiveMigration(db)
-                            cargarDatosEjemplo()
-                        }
-                    })
+                    // Ya no se cargan datos de ejemplo: desde la EFT la base local es una COPIA
+                    // de lo que entrega el servidor (se llena al iniciar sesión y al refrescar).
+                    // DatosEjemplo se sigue usando en las pruebas.
                     .build()
                 INSTANCE = instance
                 instance

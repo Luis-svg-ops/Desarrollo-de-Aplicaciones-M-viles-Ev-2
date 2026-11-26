@@ -1,5 +1,6 @@
 package cl.duoc.acis.viewmodel
 
+import cl.duoc.acis.data.remote.Resultado
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -78,12 +79,12 @@ class LoginViewModel(private val usuarioRepository: UsuarioRepository) : ViewMod
         if (!_isButtonEnabled.value || _cargando.value) return
         viewModelScope.launch {
             _cargando.value = true
-            val usuario = usuarioRepository.login(email, password)
+            // El login lo revisa ms-auth; el mensaje de error ya viene listo para mostrar
+            val resultado = usuarioRepository.iniciarSesion(email, password)
             _cargando.value = false
-            if (usuario != null) {
-                onSuccess(usuario)
-            } else {
-                _credencialesError.value = "Correo o contraseña incorrectos"
+            when (resultado) {
+                is Resultado.Exito -> onSuccess(resultado.datos)
+                is Resultado.Error -> _credencialesError.value = resultado.mensaje
             }
         }
     }

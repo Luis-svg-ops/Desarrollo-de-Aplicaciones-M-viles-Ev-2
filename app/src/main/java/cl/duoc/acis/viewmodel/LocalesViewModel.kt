@@ -2,6 +2,7 @@ package cl.duoc.acis.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import cl.duoc.acis.model.EstadoOT
 import cl.duoc.acis.model.Local
 import cl.duoc.acis.model.MaquinaEstadosOT
@@ -16,6 +17,11 @@ import kotlinx.coroutines.flow.stateIn
 data class LocalResumen(val local: Local, val totalOt: Int, val abiertas: Int)
 
 class LocalesViewModel(localRepository: LocalRepository, otRepository: OrdenTrabajoRepository) : ViewModel() {
+
+    init {
+        // Locales y equipos desde ms-ordenes (el técnico no tiene permiso: ve los de sus OT)
+        viewModelScope.launch { localRepository.sincronizar() }
+    }
 
     // Se combinan dos consultas de Room: si cambia una OT, los números se actualizan solos
     val locales: StateFlow<List<LocalResumen>> =

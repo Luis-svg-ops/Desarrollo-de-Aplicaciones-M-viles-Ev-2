@@ -12,5 +12,9 @@ data class Local(
     val direccion: String,
     val comuna: String,
     val nombreAdministrador: String,
-    val telefono: String
+    val telefono: String,
+    // Datos que vienen del servidor: código para el registro de clientes y coordenadas (clima)
+    val codigo: String = "",
+    val latitud: Double? = null,
+    val longitud: Double? = null
 )
