@@ -60,6 +60,11 @@ class EditarPerfilViewModel(private val repository: UsuarioRepository, usuarioId
             errorClaveActual = if (claveActual.isEmpty()) "Ingresa tu contraseña actual" else null
             errorClaveNueva = validarPassword(claveNueva)
             errorConfirmacion = validarConfirmacion(claveNueva, confirmacion)
+        } else {
+            // Si no cambia la clave, los campos de clave no bloquean el guardado
+            errorClaveActual = null
+            errorClaveNueva = null
+            errorConfirmacion = null
         }
         val errores = listOf(errorNombre, errorTelefono, errorClaveActual, errorClaveNueva, errorConfirmacion)
         if (cargando || errores.any { it != null }) return
