@@ -52,7 +52,12 @@ private val FondoHielo = Brush.verticalGradient(
 )
 
 @Composable
-fun LoginScreen(viewModel: LoginViewModel, onLoginExitoso: (Usuario) -> Unit) {
+fun LoginScreen(
+    viewModel: LoginViewModel,
+    onLoginExitoso: (Usuario) -> Unit,
+    onRegistrarse: () -> Unit = {},
+    onRecuperar: () -> Unit = {}
+) {
     // La pantalla solo observa el estado del ViewModel
     // El texto de los campos se lee directo (estado de Compose); el resto, con collectAsState
     val email = viewModel.email
@@ -151,8 +156,14 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginExitoso: (Usuario) -> Unit) {
                     }
                 }
 
+                // Cuenta: recuperar contraseña y registro de clientes
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    TextButton(onClick = onRecuperar) { Text("¿Olvidaste tu contraseña?") }
+                    TextButton(onClick = onRegistrarse) { Text("Crear cuenta") }
+                }
+
                 Text(
-                    "Usuarios de prueba: tecnico@acis.cl, jefe@acis.cl o cliente@acis.cl · contraseña 123456",
+                    "Usuarios de prueba: tecnico@acis.cl, jefe@acis.cl, cliente@acis.cl o admin@acis.cl · contraseña 123456",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,

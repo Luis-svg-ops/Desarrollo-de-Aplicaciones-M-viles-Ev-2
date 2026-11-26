@@ -3,6 +3,12 @@ package cl.duoc.acis.repository
 import cl.duoc.acis.data.UsuarioDao
 import cl.duoc.acis.data.remote.AuthApi
 import cl.duoc.acis.data.remote.LoginRequest
+import cl.duoc.acis.data.remote.CrearUsuarioRequest
+import cl.duoc.acis.data.remote.PerfilRequest
+import cl.duoc.acis.data.remote.RecuperarRequest
+import cl.duoc.acis.data.remote.RegistroRequest
+import cl.duoc.acis.data.remote.RestablecerRequest
+import cl.duoc.acis.data.remote.UsuarioDto
 import cl.duoc.acis.data.remote.Resultado
 import cl.duoc.acis.data.remote.Sesion
 import cl.duoc.acis.data.remote.aEntidad
@@ -39,6 +45,44 @@ class UsuarioRepository(
             }
         }
     }
+
+    // ---------- Cuenta, perfil y administración (todo pasa por ms-auth) ----------
+
+    private fun api(): AuthApi = remoto ?: error("Sin servidor configurado")
+
+    /** Registro de cliente: queda pendiente hasta que el administrador lo apruebe. */
+    suspend fun registrar(pedido: RegistroRequest): Resultado<String> =
+        llamarApi { api().registro(pedido).mensaje }
+
+    /** Paso 1 de recuperar la contraseña: el servidor envía un código (la respuesta siempre es la misma). */
+    suspend fun pedirCodigo(correo: String): Resultado<String> =
+        llamarApi { api().recuperar(RecuperarRequest(correo.trim().lowercase())).mensaje }
+
+    /** Paso 2: código de 6 dígitos + contraseña nueva. */
+    suspend fun restablecer(correo: String, codigo: String, claveNueva: String): Resultado<String> =
+        llamarApi { api().restablecer(RestablecerRequest(correo.trim().lowercase(), codigo, claveNueva)).mensaje }
+
+    /** Edita el perfil propio en el servidor y actualiza la copia de Room. */
+    suspend fun actualizarPerfil(pedido: PerfilRequest): Resultado<Usuario> =
+        when (val r = llamarApi { api().editarPerfil(pedido) }) {
+            is Resultado.Error -> r
+            is Resultado.Exito -> {
+                val usuario = r.datos.aEntidad()
+                usuarioDao.upsert(usuario)
+                Resultado.Exito(usuario)
+            }
+        }
+
+    suspend fun listarUsuarios(soloPendientes: Boolean): Resultado<List<UsuarioDto>> =
+        llamarApi { api().usuarios(if (soloPendientes) "PENDIENTE" else null) }
+
+    suspend fun crearUsuario(pedido: CrearUsuarioRequest): Resultado<UsuarioDto> =
+        llamarApi { api().crearUsuario(pedido) }
+
+    suspend fun aprobar(id: Long): Resultado<UsuarioDto> = llamarApi { api().aprobar(id) }
+
+    /** Rechaza un registro pendiente (se borra) o desactiva a un usuario que ya trabajó. */
+    suspend fun eliminar(id: Long): Resultado<String> = llamarApi { api().eliminarUsuario(id).mensaje }
 
     /** Lista de técnicos activos desde ms-auth (la usa el jefe al asignar una OT). */
     suspend fun sincronizarTecnicos() {

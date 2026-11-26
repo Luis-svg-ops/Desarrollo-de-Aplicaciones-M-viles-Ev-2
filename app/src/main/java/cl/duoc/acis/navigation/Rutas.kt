@@ -3,6 +3,12 @@ package cl.duoc.acis.navigation
 /** Rutas de navegación de la app (mismo estilo que el ejemplo del profe). */
 sealed class Rutas(val route: String) {
     data object Login : Rutas("login")
+    // Cuenta (sin sesión): registro de clientes y recuperar contraseña
+    data object Registro : Rutas("registro")
+    data object Recuperar : Rutas("recuperar")
+    data object EditarPerfil : Rutas("editar_perfil")
+    // Panel del administrador (con barra inferior)
+    data object Usuarios : Rutas("usuarios")
 
     // Pantallas principales (con barra inferior)
     data object Ots : Rutas("ots")
@@ -29,6 +35,6 @@ sealed class Rutas(val route: String) {
 
     companion object {
         /** Rutas que muestran la barra inferior. */
-        val principales get() = setOf(Ots.route, Locales.route, Perfil.route)
+        val principales get() = setOf(Ots.route, Locales.route, Usuarios.route, Perfil.route)
     }
 }

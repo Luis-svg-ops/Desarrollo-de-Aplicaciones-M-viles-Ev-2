@@ -67,6 +67,15 @@ import cl.duoc.acis.view.LoginScreen
 import cl.duoc.acis.view.OtFormScreen
 import cl.duoc.acis.view.ListaOtScreen
 import cl.duoc.acis.view.PerfilScreen
+import cl.duoc.acis.view.RegistroScreen
+import cl.duoc.acis.view.RecuperarScreen
+import cl.duoc.acis.view.EditarPerfilScreen
+import cl.duoc.acis.view.UsuariosScreen
+import cl.duoc.acis.viewmodel.RegistroViewModel
+import cl.duoc.acis.viewmodel.RecuperarViewModel
+import cl.duoc.acis.viewmodel.EditarPerfilViewModel
+import cl.duoc.acis.viewmodel.UsuariosViewModel
+import androidx.compose.material.icons.filled.AccountCircle
 import cl.duoc.acis.viewmodel.DetalleOtViewModel
 import cl.duoc.acis.viewmodel.DiagnosticoViewModel
 import cl.duoc.acis.viewmodel.EquipoFormViewModel
@@ -121,6 +130,11 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     val items = if (esCliente) listOf(
         // El cliente solo consulta sus OT: no ve otros locales
         ItemBarra(Rutas.Ots.route, "Mis OT", Icons.AutoMirrored.Filled.List),
+        ItemBarra(Rutas.Perfil.route, "Perfil", Icons.Filled.Person),
+    ) else if (rol == Rol.ADMIN) listOf(
+        // El administrador gestiona usuarios y puede revisar las OT
+        ItemBarra(Rutas.Usuarios.route, "Usuarios", Icons.Filled.AccountCircle),
+        ItemBarra(Rutas.Ots.route, "Órdenes", Icons.AutoMirrored.Filled.List),
         ItemBarra(Rutas.Perfil.route, "Perfil", Icons.Filled.Person),
     ) else if (esJefe) listOf(
         ItemBarra(Rutas.Ots.route, "Órdenes", Icons.AutoMirrored.Filled.List),
@@ -198,8 +212,29 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     rol = usuario.rol
                     usuarioId = usuario.id
                     localCliente = usuario.localId ?: 0L
-                    navController.navigate(Rutas.Ots.route) { popUpTo(Rutas.Login.route) { inclusive = true } }
-                })
+                    // El administrador parte en su panel de usuarios; el resto, en sus OT
+                    val inicio = if (usuario.rol == Rol.ADMIN) Rutas.Usuarios.route else Rutas.Ots.route
+                    navController.navigate(inicio) { popUpTo(Rutas.Login.route) { inclusive = true } }
+                },
+                    onRegistrarse = { navController.navigate(Rutas.Registro.route) },
+                    onRecuperar = { navController.navigate(Rutas.Recuperar.route) }
+                )
+            }
+            composable(Rutas.Registro.route) {
+                val vm: RegistroViewModel = viewModel(factory = fabrica { RegistroViewModel(usuarioRepository) })
+                RegistroScreen(viewModel = vm, onVolver = { navController.popBackStack() })
+            }
+            composable(Rutas.Recuperar.route) {
+                val vm: RecuperarViewModel = viewModel(factory = fabrica { RecuperarViewModel(usuarioRepository) })
+                RecuperarScreen(viewModel = vm, onVolver = { navController.popBackStack() })
+            }
+            composable(Rutas.EditarPerfil.route) {
+                val vm: EditarPerfilViewModel = viewModel(factory = fabrica { EditarPerfilViewModel(usuarioRepository, usuarioId) })
+                EditarPerfilScreen(viewModel = vm, onVolver = { navController.popBackStack() })
+            }
+            composable(Rutas.Usuarios.route) {
+                val vm: UsuariosViewModel = viewModel(factory = fabrica { UsuariosViewModel(usuarioRepository) })
+                UsuariosScreen(viewModel = vm)
             }
             composable(Rutas.Ots.route) {
                 val listaViewModel: ListaOtViewModel = viewModel(
@@ -209,6 +244,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     viewModel = listaViewModel,
                     esJefe = esJefe,
                     esCliente = esCliente,
+                    puedeCrear = rol == Rol.JEFE,
                     onVerOt = { navController.navigate(Rutas.DetalleOt.createRoute(it)) },
                     onNuevaOt = { navController.navigate(Rutas.OtForm.createRoute()) }
                 )
@@ -223,7 +259,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 val perfilViewModel: PerfilViewModel = viewModel(
                     factory = fabrica { PerfilViewModel(usuarioRepository, usuarioId) }
                 )
-                PerfilScreen(viewModel = perfilViewModel, onCerrarSesion = {
+                PerfilScreen(viewModel = perfilViewModel, onEditar = { navController.navigate(Rutas.EditarPerfil.route) }, onCerrarSesion = {
                     rol = null
                     // Se borra el token: hay que volver a iniciar sesión
                     Sesion.cerrar()

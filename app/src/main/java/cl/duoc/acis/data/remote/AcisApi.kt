@@ -6,6 +6,7 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 /**
  * Endpoints de ms-auth (puerto 8090). Retrofit crea la implementación a partir de las anotaciones:
@@ -19,6 +20,33 @@ interface AuthApi {
 
     @GET("usuarios/tecnicos")
     suspend fun tecnicos(): List<UsuarioDto>
+
+    // ---- Cuenta (públicos) ----
+    @POST("auth/registro")
+    suspend fun registro(@Body pedido: RegistroRequest): MensajeDto
+
+    @POST("auth/recuperar")
+    suspend fun recuperar(@Body pedido: RecuperarRequest): MensajeDto
+
+    @POST("auth/restablecer")
+    suspend fun restablecer(@Body pedido: RestablecerRequest): MensajeDto
+
+    // ---- Perfil propio ----
+    @PUT("usuarios/yo")
+    suspend fun editarPerfil(@Body pedido: PerfilRequest): UsuarioDto
+
+    // ---- Administrador ----
+    @GET("admin/usuarios")
+    suspend fun usuarios(@Query("estado") estado: String? = null): List<UsuarioDto>
+
+    @POST("admin/usuarios")
+    suspend fun crearUsuario(@Body pedido: CrearUsuarioRequest): UsuarioDto
+
+    @PUT("admin/usuarios/{id}/aprobar")
+    suspend fun aprobar(@Path("id") id: Long): UsuarioDto
+
+    @DELETE("admin/usuarios/{id}")
+    suspend fun eliminarUsuario(@Path("id") id: Long): MensajeDto
 }
 
 /** Endpoints de ms-ordenes (puerto 8091). El token se agrega solo (ver ClienteApi). */

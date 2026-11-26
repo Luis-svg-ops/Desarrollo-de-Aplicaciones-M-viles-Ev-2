@@ -30,6 +30,23 @@ data class UsuarioDto(
 
 data class LoginResponse(val token: String, val tipo: String, val expiraEnSegundos: Long, val usuario: UsuarioDto)
 
+data class RegistroRequest(val nombre: String, val correo: String, val clave: String, val telefono: String, val codigoLocal: String)
+
+data class RecuperarRequest(val correo: String)
+
+data class RestablecerRequest(val correo: String, val codigo: String, val claveNueva: String)
+
+data class PerfilRequest(val nombre: String, val telefono: String, val claveActual: String?, val claveNueva: String?)
+
+data class CrearUsuarioRequest(
+    val nombre: String,
+    val correo: String,
+    val clave: String,
+    val telefono: String,
+    val rol: Rol,
+    val localId: Long?
+)
+
 // ---------- ms-ordenes ----------
 
 data class LocalDto(

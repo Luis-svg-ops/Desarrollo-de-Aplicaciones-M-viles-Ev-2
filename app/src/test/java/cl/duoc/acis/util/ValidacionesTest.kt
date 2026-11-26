@@ -95,4 +95,35 @@ class ValidacionesTest {
         assertNull(validarHoraProgramada(ahora.toLocalDate(), java.time.LocalTime.of(12, 0), ahora))
         assertNull("Mañana a las 9 sí se puede", validarHoraProgramada(ahora.toLocalDate().plusDays(1), java.time.LocalTime.of(9, 0), ahora))
     }
+
+    // ---- Cuenta (EFT): registro, recuperar contraseña y perfil ----
+
+    @Test
+    fun nombre_entre3y60() {
+        assertEquals("Ingresa tu nombre", validarNombre(" "))
+        assertEquals("Mínimo 3 caracteres", validarNombre("Al"))
+        assertNull(validarNombre("Ana Pérez"))
+    }
+
+    @Test
+    fun telefono_formatoChileno() {
+        assertEquals("Ingresa un teléfono", validarTelefono(""))
+        assertEquals("Teléfono no válido (ej.: +56 9 1234 5678)", validarTelefono("abc123"))
+        assertNull(validarTelefono("+56 9 1234 5678"))
+    }
+
+    @Test
+    fun codigoDeLocal_yCodigoDeRecuperacion() {
+        assertEquals("Código no válido (ej.: MALL-02)", validarCodigoLocal("MA L"))
+        assertNull(validarCodigoLocal("MALL-02"))
+        assertEquals("El código tiene 6 dígitos", validarCodigoRecuperacion("12345"))
+        assertNull(validarCodigoRecuperacion("123456"))
+    }
+
+    @Test
+    fun confirmacion_debeCoincidir() {
+        assertEquals("Repite la contraseña", validarConfirmacion("secreta1", ""))
+        assertEquals("Las contraseñas no coinciden", validarConfirmacion("secreta1", "secreta2"))
+        assertNull(validarConfirmacion("secreta1", "secreta1"))
+    }
 }
