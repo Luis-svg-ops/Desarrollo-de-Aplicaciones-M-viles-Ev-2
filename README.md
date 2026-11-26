@@ -172,5 +172,4 @@ ACIS_OT_Terreno/
 ## Trabajo y planificación
 
 - **GitHub:** una rama por funcionalidad (`feature/...`), unida a `main` con `--no-ff`, así que el historial muestra cada etapa del proyecto.
-- **Trello:** tablero con las historias de usuario y su estado.
 - **Requerimientos:** planilla Scrum con historias de usuario, criterios de aceptación (Dado / Cuando / Entonces) y una hoja de trazabilidad que indica qué prueba cubre cada escenario.
