@@ -1,5 +1,6 @@
 package cl.duoc.acis.navigation
 
+import cl.duoc.acis.repository.ClimaRepository
 import cl.duoc.acis.data.remote.ClienteApi
 import cl.duoc.acis.data.remote.Sesion
 import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
@@ -112,6 +113,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     val ubicacion = remember { ServicioUbicacion(context.applicationContext) }
     // Check-in en segundo plano: una sola instancia para toda la app
     val checkIns = remember { GestorCheckIn.obtener(ordenTrabajoRepository, ubicacion) }
+    // API externa del clima (Open-Meteo)
+    val climaRepository = remember { ClimaRepository(ClienteApi.clima) }
     val localRepository = remember { LocalRepository(database.localDao(), database.equipoDao(), ClienteApi.ordenes) }
     val equipoRepository = remember { EquipoRepository(database.equipoDao(), database.ordenTrabajoDao(), ClienteApi.ordenes) }
 
@@ -273,7 +276,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             ) { backStack ->
                 val otId = backStack.arguments?.getLong("otId") ?: 0L
                 val detalleViewModel: DetalleOtViewModel = viewModel(
-                    factory = fabrica { DetalleOtViewModel(ordenTrabajoRepository, otId, rol ?: Rol.TECNICO, usuarioId, checkIns) }
+                    factory = fabrica { DetalleOtViewModel(ordenTrabajoRepository, otId, rol ?: Rol.TECNICO, usuarioId, checkIns, climaRepository) }
                 )
                 DetalleOtScreen(
                     viewModel = detalleViewModel,

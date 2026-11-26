@@ -207,6 +207,12 @@ fun DetalleOtScreen(
                 Aviso("Motivo: ${item.ot.motivo ?: ""}")
             }
             Datos(item)
+            // Clima en el local (API externa): solo mientras la OT no ha terminado
+            val clima by viewModel.clima.collectAsState()
+            val estadoClima = clima
+            if (estadoClima != null && item.ot.estado != EstadoOT.CERRADA && item.ot.estado != EstadoOT.CONFORME) {
+                TarjetaClima(estadoClima, onReintentar = viewModel::cargarClima)
+            }
             val terminada = item.ot.estado == EstadoOT.CERRADA || item.ot.estado == EstadoOT.CONFORME
             if (terminada) Cierre(item)
             AnimatedVisibility(
@@ -480,6 +486,29 @@ private fun Aviso(texto: String) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Filled.Info, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
             Text("  $texto", color = MaterialTheme.colorScheme.onPrimaryContainer, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+/** Clima actual en el local (Open-Meteo). Con lluvia o viento y equipo en la azotea, muestra una advertencia. */
+@Composable
+private fun TarjetaClima(estado: DetalleOtViewModel.EstadoClima, onReintentar: () -> Unit) {
+    TarjetaBlanca {
+        Text("Clima en el local ahora", style = MaterialTheme.typography.titleSmall)
+        when (estado) {
+            is DetalleOtViewModel.EstadoClima.Cargando ->
+                CircularProgressIndicator(modifier = Modifier.padding(top = 8.dp).size(24.dp), strokeWidth = 2.dp)
+            is DetalleOtViewModel.EstadoClima.Error -> {
+                Text(estado.mensaje, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = onReintentar) { Text("Reintentar") }
+            }
+            is DetalleOtViewModel.EstadoClima.Listo -> {
+                val c = estado.clima
+                Text("${c.temperatura} °C · ${c.descripcion}", style = MaterialTheme.typography.headlineSmall)
+                Text("Viento ${c.vientoKmh} km/h · Lluvia ${c.lluviaMm} mm", style = MaterialTheme.typography.bodyMedium)
+                estado.recomendacion?.let { Aviso(it) }
+                Text("Fuente: Open-Meteo", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
     }
 }
