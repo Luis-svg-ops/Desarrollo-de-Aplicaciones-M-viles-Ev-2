@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    // Kover: mide qué porcentaje de la lógica cubren las pruebas unitarias
+    alias(libs.plugins.kover)
 }
 
 android {
@@ -61,6 +63,10 @@ dependencies {
     implementation(libs.retrofit.gson)
     ksp(libs.androidx.room.compiler)
     testImplementation(libs.junit)
+    // MockK: objetos falsos (mocks) para probar ViewModel y Repository sin base de datos ni red
+    testImplementation(libs.mockk)
+    // Para probar corrutinas (viewModelScope) en pruebas unitarias
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -68,3 +74,41 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
+
+/*
+ * Cobertura de pruebas (EFT: "al menos el 80 % de la lógica, en ViewModel o Repository").
+ * Se mide solo la lógica: ViewModel, Repository, reglas (model) y utilidades puras.
+ * Se excluye lo que no es lógica o que se prueba en el emulador (androidTest):
+ * pantallas de Compose, tema, navegación, Room (DAO y base) y acceso al hardware (GPS, cámara, archivos).
+ * Reporte: ./gradlew koverHtmlReportDebug  →  app/build/reports/kover/htmlDebug/index.html
+ */
+kover {
+    reports {
+        filters {
+            excludes {
+                packages("cl.duoc.acis.view", "cl.duoc.acis.ui.theme", "cl.duoc.acis.navigation")
+                classes(
+                    "cl.duoc.acis.MainActivity*",
+                    "*ComposableSingletons*",
+                    // Room (se prueba en el emulador) y datos de ejemplo
+                    "cl.duoc.acis.data.AppDatabase*", "cl.duoc.acis.data.*Dao*", "cl.duoc.acis.data.DatosEjemplo*",
+                    // Solo forma del JSON o configuración de Retrofit (no tienen lógica)
+                    "cl.duoc.acis.data.remote.*Dto", "cl.duoc.acis.data.remote.*Request", "cl.duoc.acis.data.remote.*Response",
+                    "cl.duoc.acis.data.remote.ClienteApi*", "cl.duoc.acis.data.remote.Sesion*",
+                    // Hardware y archivos (se prueban en el emulador)
+                    "cl.duoc.acis.util.ServicioUbicacion*", "cl.duoc.acis.util.FotosKt*", "cl.duoc.acis.util.GestorCheckIn*",
+                    "*_Impl*", "*.BuildConfig"
+                )
+                annotatedBy("androidx.compose.runtime.Composable")
+            }
+        }
+        variant("debug") {
+            verify {
+                rule("Cobertura mínima de la lógica (EFT)") {
+                    minBound(80)
+                }
+            }
+        }
+    }
+}
+
