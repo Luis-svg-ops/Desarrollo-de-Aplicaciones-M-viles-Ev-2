@@ -16,6 +16,44 @@ fun validarEmail(email: String): String? = when {
     else -> null
 }
 
+/** Nombre completo: entre 3 y 60 caracteres (igual que ms-auth). */
+fun validarNombre(nombre: String): String? = when {
+    nombre.isBlank() -> "Ingresa tu nombre"
+    nombre.trim().length < 3 -> "Mínimo 3 caracteres"
+    nombre.trim().length > 60 -> "Máximo 60 caracteres"
+    else -> null
+}
+
+private val FORMATO_TELEFONO = Regex("""^\+?[0-9 ]{8,16}$""")
+
+/** Teléfono chileno: "+56 9 1234 5678" (mismo formato que valida el servidor). */
+fun validarTelefono(telefono: String): String? = when {
+    telefono.isBlank() -> "Ingresa un teléfono"
+    !FORMATO_TELEFONO.matches(telefono.trim()) -> "Teléfono no válido (ej.: +56 9 1234 5678)"
+    else -> null
+}
+
+/** Código del local que ACIS le entrega al cliente (ej.: MALL-02). */
+fun validarCodigoLocal(codigo: String): String? = when {
+    codigo.isBlank() -> "Ingresa el código de tu local"
+    !Regex("^[A-Za-z0-9-]{4,20}$").matches(codigo.trim()) -> "Código no válido (ej.: MALL-02)"
+    else -> null
+}
+
+/** Código de recuperación: exactamente 6 dígitos. */
+fun validarCodigoRecuperacion(codigo: String): String? = when {
+    codigo.isBlank() -> "Ingresa el código que te llegó"
+    !Regex("^[0-9]{6}$").matches(codigo) -> "El código tiene 6 dígitos"
+    else -> null
+}
+
+/** La confirmación tiene que ser igual a la contraseña nueva. */
+fun validarConfirmacion(clave: String, confirmacion: String): String? = when {
+    confirmacion.isEmpty() -> "Repite la contraseña"
+    confirmacion != clave -> "Las contraseñas no coinciden"
+    else -> null
+}
+
 fun validarPassword(password: String): String? = when {
     password.isEmpty() -> "Ingresa tu contraseña"
     password.length < 6 -> "Debe tener al menos 6 caracteres"

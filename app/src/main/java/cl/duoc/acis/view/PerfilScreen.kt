@@ -44,7 +44,7 @@ import cl.duoc.acis.viewmodel.iniciales
 
 /** Datos del usuario, para qué usa la app cada permiso, y cerrar sesión. */
 @Composable
-fun PerfilScreen(viewModel: PerfilViewModel, onCerrarSesion: () -> Unit) {
+fun PerfilScreen(viewModel: PerfilViewModel, onCerrarSesion: () -> Unit, onEditar: () -> Unit = {}) {
     val usuario by viewModel.usuario.collectAsState()
     val context = LocalContext.current
 
@@ -87,7 +87,7 @@ fun PerfilScreen(viewModel: PerfilViewModel, onCerrarSesion: () -> Unit) {
             Tarjeta {
                 Permiso(Icons.Filled.LocationOn, "Ubicación", "Solo al hacer check-in, para registrar dónde llegaste. No te sigue durante el día.")
                 Permiso(Icons.Filled.Add, "Cámara", "Solo para la foto de evidencia del equipo. La foto queda dentro de la app, no en tu galería.")
-                Permiso(Icons.Filled.Lock, "Tus datos", "Se guardan solo en este teléfono. La app no envía información a ningún servidor.")
+                Permiso(Icons.Filled.Lock, "Tus datos", "Se guardan en el servidor de ACIS. El teléfono guarda una copia para que puedas ver tus OT sin señal.")
                 TextButton(onClick = {
                     // Abre los ajustes de la app, donde el usuario puede dar o quitar cada permiso
                     context.startActivity(
@@ -99,6 +99,11 @@ fun PerfilScreen(viewModel: PerfilViewModel, onCerrarSesion: () -> Unit) {
                 }
             }
             }
+
+            OutlinedButton(
+                onClick = onEditar,
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(56.dp)
+            ) { Text("Editar perfil") }
 
             OutlinedButton(
                 onClick = onCerrarSesion,

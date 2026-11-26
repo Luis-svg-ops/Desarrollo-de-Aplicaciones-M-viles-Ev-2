@@ -57,7 +57,9 @@ fun ListaOtScreen(
     onVerOt: (Long) -> Unit,
     onNuevaOt: () -> Unit,
     // El cliente ve pestañas como el técnico, pero sin la tarjeta de próxima visita (es del técnico)
-    esCliente: Boolean = false
+    esCliente: Boolean = false,
+    // El administrador ve las OT como el jefe, pero no las crea (eso es trabajo del jefe)
+    puedeCrear: Boolean = esJefe
 ) {
     val ots by viewModel.otsFiltradas.collectAsState()
     val conteos by viewModel.conteos.collectAsState()
@@ -70,7 +72,7 @@ fun ListaOtScreen(
         topBar = { AcisTopBar(if (esJefe) "Órdenes de trabajo" else if (esCliente) "OT de mi local" else "Mis OT del día") },
         floatingActionButton = {
             // Solo el Jefe crea OT
-            if (esJefe) {
+            if (puedeCrear) {
                 ExtendedFloatingActionButton(
                     onClick = onNuevaOt,
                     icon = { Icon(Icons.Filled.Add, contentDescription = null) },
