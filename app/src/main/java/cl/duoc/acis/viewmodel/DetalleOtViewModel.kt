@@ -1,5 +1,11 @@
 package cl.duoc.acis.viewmodel
 
+import kotlinx.coroutines.flow.first
+import cl.duoc.acis.util.recomendacionClima
+import cl.duoc.acis.util.Clima
+import cl.duoc.acis.repository.ClimaRepository
+import cl.duoc.acis.model.UbicacionEquipo
+import cl.duoc.acis.data.remote.Resultado
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -43,8 +49,40 @@ class DetalleOtViewModel(
     private val otId: Long,
     private val rol: Rol,
     private val usuarioId: Long,
-    private val checkIns: GestorCheckIn
+    private val checkIns: GestorCheckIn,
+    // API externa del clima (null en las pruebas: la tarjeta no se muestra)
+    private val climaRepository: ClimaRepository? = null
 ) : ViewModel() {
+
+    // ---- Clima en el local (API externa) ----
+    sealed class EstadoClima {
+        data object Cargando : EstadoClima()
+        data class Listo(val clima: Clima, val recomendacion: String?) : EstadoClima()
+        data class Error(val mensaje: String) : EstadoClima()
+    }
+
+    private val _clima = MutableStateFlow<EstadoClima?>(null)
+    /** null = no se muestra (sin coordenadas o sin API). */
+    val clima: StateFlow<EstadoClima?> = _clima.asStateFlow()
+
+    /** Pide el clima con las coordenadas del local de la OT. */
+    fun cargarClima() {
+        val api = climaRepository ?: return
+        viewModelScope.launch {
+            val d = repository.getDetalle(otId).first { it != null } ?: return@launch
+            val lat = d.local.latitud ?: return@launch
+            val lon = d.local.longitud ?: return@launch
+            _clima.value = EstadoClima.Cargando
+            _clima.value = when (val r = api.climaEn(lat, lon)) {
+                is Resultado.Exito -> EstadoClima.Listo(
+                    r.datos, recomendacionClima(r.datos, d.equipo.ubicacion == UbicacionEquipo.EXTERIOR)
+                )
+                is Resultado.Error -> EstadoClima.Error(
+                    if (r.sinConexion) "No se pudo consultar el clima (sin conexión)" else r.mensaje
+                )
+            }
+        }
+    }
 
     // La OT con su local, equipo y técnico. Se actualiza sola si cambia en la base
     val detalle: StateFlow<OtConDetalle?> = repository.getDetalle(otId)
@@ -134,6 +172,7 @@ class DetalleOtViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     init {
+        cargarClima()
         // Historial actualizado desde el servidor (si no hay señal, queda el guardado)
         viewModelScope.launch { repository.sincronizarHistorial(otId) }
         // Cuando el check-in termina (aunque haya empezado antes de abrir esta pantalla), se muestra el resultado

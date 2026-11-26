@@ -56,4 +56,19 @@ object ClienteApi {
     // "lazy": se crean la primera vez que se usan, una sola vez para toda la app
     val auth: AuthApi by lazy { retrofit(URL_AUTH).create(AuthApi::class.java) }
     val ordenes: OrdenesApi by lazy { retrofit(URL_ORDENES).create(OrdenesApi::class.java) }
+
+    const val URL_CLIMA = "https://api.open-meteo.com/"
+
+    /**
+     * API externa: usa su propio cliente HTTP, SIN el interceptor del token.
+     * Nuestro token es solo para nuestros microservicios: nunca se le manda a un tercero.
+     */
+    val clima: ClimaApi by lazy {
+        Retrofit.Builder()
+            .baseUrl(URL_CLIMA)
+            .client(OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS).readTimeout(10, TimeUnit.SECONDS).build())
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ClimaApi::class.java)
+    }
 }
