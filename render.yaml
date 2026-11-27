@@ -1,0 +1,36 @@
+# Publicación del backend en Render (https://render.com), plan gratuito.
+# Render lee este archivo ("Blueprint") y crea los 2 microservicios a partir de este repositorio.
+# Los dos comparten el secreto del JWT (generado por Render, no está escrito en el repo).
+
+envVarGroups:
+  - name: acis-secretos
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+
+services:
+  - type: web
+    name: acis-ot-auth
+    runtime: docker
+    plan: free
+    region: virginia
+    rootDir: backend/ms-auth
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - fromGroup: acis-secretos
+      # ms-auth le pregunta a ms-ordenes por el código del local al registrar un cliente
+      - key: ORDENES_URL
+        value: https://acis-ot-ordenes.onrender.com
+
+  - type: web
+    name: acis-ot-ordenes
+    runtime: docker
+    plan: free
+    region: virginia
+    rootDir: backend/ms-ordenes
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - fromGroup: acis-secretos
+      # ms-ordenes le pregunta a ms-auth por los técnicos al asignar una OT
+      - key: AUTH_URL
+        value: https://acis-ot-auth.onrender.com

@@ -2,6 +2,7 @@ package cl.duoc.acis.navigation
 
 import cl.duoc.acis.repository.ClimaRepository
 import cl.duoc.acis.data.remote.ClienteApi
+import cl.duoc.acis.data.remote.ConfigServidor
 import cl.duoc.acis.data.remote.Sesion
 import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
 import androidx.compose.animation.core.tween
@@ -104,6 +105,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     // Base de datos y repositorios: se crean una sola vez (igual que en el ejemplo del curso)
     val context = LocalContext.current
     val database = remember { AppDatabase.getDatabase(context) }
+    // Servidor elegido en ⚙ Servidor (nube o PC): se lee antes del primer pedido
+    remember { ConfigServidor.cargar(context.applicationContext) }
     // Con los microservicios: cada repositorio recibe su API (Retrofit) y usa Room como copia local
     val usuarioRepository = remember { UsuarioRepository(database.usuarioDao(), ClienteApi.auth) }
     val ordenTrabajoRepository = remember {

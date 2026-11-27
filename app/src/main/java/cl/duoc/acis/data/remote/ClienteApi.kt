@@ -25,8 +25,9 @@ object Sesion {
  */
 object ClienteApi {
 
-    const val URL_AUTH = "http://10.0.2.2:8090/"
-    const val URL_ORDENES = "http://10.0.2.2:8091/"
+    // Nombres "de mentira": el interceptor de abajo los cambia por el servidor elegido en ⚙ Servidor
+    const val URL_AUTH = "http://acis-auth/"
+    const val URL_ORDENES = "http://acis-ordenes/"
 
     /** Agrega "Authorization: Bearer <token>" a cada pedido, si hay sesión. */
     private val agregarToken = Interceptor { cadena ->
@@ -38,12 +39,36 @@ object ClienteApi {
         )
     }
 
-    /** Si el servidor no responde en 10 segundos se avisa "sin conexión" en vez de esperar para siempre. */
+    /**
+     * Manda cada pedido al servidor elegido (nube, emulador u otra dirección) sin tener que recrear Retrofit:
+     * cambia el inicio de la URL ("http://acis-auth/") por la dirección real.
+     */
+    private val elegirServidor = Interceptor { cadena ->
+        val pedido = cadena.request()
+        val destino = when (pedido.url().host()) {
+            "acis-auth" -> ConfigServidor.urlAuth
+            "acis-ordenes" -> ConfigServidor.urlOrdenes
+            else -> null
+        }
+        val base = destino?.let { okhttp3.HttpUrl.parse(it) }
+        cadena.proceed(
+            if (base == null) pedido
+            else pedido.newBuilder().url(
+                pedido.url().newBuilder().scheme(base.scheme()).host(base.host()).port(base.port()).build()
+            ).build()
+        )
+    }
+
+    /**
+     * Tiempos de espera: el servidor gratis "se duerme" y la primera respuesta puede tardar ~50 s,
+     * por eso se espera hasta 60 s. Sin internet el error llega al tiro (no espera).
+     */
     private val http: OkHttpClient by lazy {
         OkHttpClient.Builder()
+            .addInterceptor(elegirServidor)
             .addInterceptor(agregarToken)
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(15, TimeUnit.SECONDS)
+            .connectTimeout(20, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
             .build()
     }
 

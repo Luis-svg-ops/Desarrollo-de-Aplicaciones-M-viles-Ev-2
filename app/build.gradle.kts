@@ -116,7 +116,7 @@ kover {
                     "cl.duoc.acis.data.AppDatabase*", "cl.duoc.acis.data.*Dao*", "cl.duoc.acis.data.DatosEjemplo*",
                     // Solo forma del JSON o configuración de Retrofit (no tienen lógica)
                     "cl.duoc.acis.data.remote.*Dto", "cl.duoc.acis.data.remote.*Request", "cl.duoc.acis.data.remote.*Response",
-                    "cl.duoc.acis.data.remote.ClienteApi*", "cl.duoc.acis.data.remote.Sesion*",
+                    "cl.duoc.acis.data.remote.ClienteApi*", "cl.duoc.acis.data.remote.Sesion*", "cl.duoc.acis.data.remote.ConfigServidor*",
                     // Hardware y archivos (se prueban en el emulador)
                     "cl.duoc.acis.util.ServicioUbicacion*", "cl.duoc.acis.util.FotosKt*", "cl.duoc.acis.util.GestorCheckIn*",
                     "*_Impl*", "*.BuildConfig"
