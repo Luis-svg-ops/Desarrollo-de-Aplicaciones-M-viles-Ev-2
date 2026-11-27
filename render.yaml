@@ -1,6 +1,9 @@
 # Publicación del backend en Render (https://render.com), plan gratuito.
 # Render lee este archivo ("Blueprint") y crea los 2 microservicios a partir de este repositorio.
 # Los dos comparten el secreto del JWT (generado por Render, no está escrito en el repo).
+# Base de datos: PostgreSQL en Supabase. La dirección y la clave (DB_URL, DB_USER, DB_PASSWORD) se escriben
+# en el panel de Render, en el grupo "acis-secretos": nunca van en el repositorio.
+# Cada microservicio es dueño de sus datos: usa su propio esquema (auth / ordenes).
 
 envVarGroups:
   - name: acis-secretos
@@ -21,6 +24,8 @@ services:
       # ms-auth le pregunta a ms-ordenes por el código del local al registrar un cliente
       - key: ORDENES_URL
         value: https://acis-ot-ordenes.onrender.com
+      - key: DB_SCHEMA
+        value: auth
 
   - type: web
     name: acis-ot-ordenes
@@ -34,3 +39,5 @@ services:
       # ms-ordenes le pregunta a ms-auth por los técnicos al asignar una OT
       - key: AUTH_URL
         value: https://acis-ot-auth.onrender.com
+      - key: DB_SCHEMA
+        value: ordenes
