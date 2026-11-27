@@ -8,7 +8,7 @@ App Android para gestionar **órdenes de trabajo (OT) en terreno** de ACIS Servi
 | **Asignatura** | DSY1105 Desarrollo de Aplicaciones Móviles, Duoc UC |
 | **Evaluación** | Evaluación Final Transversal (EFT): encargo + defensa técnica |
 | **App móvil** | Kotlin, Jetpack Compose, Material 3, MVVM, Room, Retrofit |
-| **Backend** | 2 microservicios Spring Boot 4 (Java 25) con base de datos H2 |
+| **Backend** | 2 microservicios Spring Boot 4 (Java 25) publicados en Render, con base de datos **PostgreSQL en Supabase** |
 
 ## Arquitectura
 
@@ -22,12 +22,12 @@ flowchart LR
     R -- "Retrofit + JWT" --> AUTH["ms-auth :8090<br/>usuarios, login, roles"]
     R -- "Retrofit + JWT" --> ORD["ms-ordenes :8091<br/>OT, locales, equipos"]
     R -- "Retrofit (sin token)" --> METEO["Open-Meteo<br/>API externa de clima"]
-    AUTH --- DBA[("H2 auth")]
-    ORD --- DBO[("H2 ordenes")]
+    AUTH --> PG[("PostgreSQL<br/>Supabase")]
+    ORD --> PG
     AUTH <-- "códigos de local / técnicos" --> ORD
 ```
 
-- **Almacenamiento externo (microservicios):** es la fuente de la verdad. Lo comparten todos los roles: el jefe, el técnico y el cliente ven la misma OT desde teléfonos distintos.
+- **Almacenamiento externo:** base de datos **PostgreSQL en Supabase**, en internet, a la que solo acceden los microservicios. Es la fuente de la verdad. Lo comparten todos los roles: el jefe, el técnico y el cliente ven la misma OT desde teléfonos distintos.
 - **Almacenamiento local (Room):** guarda una **copia** de lo último que entregó el servidor. Así el técnico sigue viendo sus OT sin señal (azoteas, subterráneos). Las acciones necesitan conexión, porque el servidor valida las reglas.
 - **Seguridad:** el login entrega un **token JWT** firmado con el rol del usuario. Cada microservicio verifica la firma y **filtra con los datos del token**, nunca con lo que mande la app.
 
@@ -50,7 +50,7 @@ flowchart LR
 | Animaciones | `view/components/Animaciones.kt`, transiciones de navegación, lista animada, `AnimatedContent` en recuperar contraseña |
 | MVVM y persistencia local | `viewmodel/`, `repository/`, `data/` (Room con 5 tablas) |
 | 2 recursos nativos | **GPS** (check-in) y **cámara** (foto de evidencia), con permisos en tiempo de ejecución |
-| Microservicios propios con BD y CRUD | `backend/ms-auth` y `backend/ms-ordenes` (Spring Boot + H2) |
+| Microservicios propios con BD y CRUD | `backend/ms-auth` y `backend/ms-ordenes` (Spring Boot + JPA) sobre **PostgreSQL en Supabase**; en el PC usan H2 sin instalar nada |
 | API externa con Retrofit | Open-Meteo: `data/remote/ClimaApi.kt`, tarjeta "Clima en el local" en el detalle de la OT |
 | Pruebas ≥ 80 % de la lógica | 117 pruebas unitarias con **MockK**, cobertura **97 %** medida con **Kover** |
 | APK firmado | `apk/ACIS_OT_Terreno-v1.0-release.apk`, llave en `keystore/` |
@@ -107,9 +107,15 @@ Los dos microservicios están publicados en **Render** (plan gratuito), así que
 2. Instalarlo (Android pide permitir "instalar apps de origen desconocido").
 3. Entrar con un usuario de prueba (más abajo).
 
-> El plan gratuito "se duerme" si nadie lo usa: **la primera conexión puede tardar hasta 1 minuto**. Después responde normal. Al reiniciarse, los datos vuelven a los de ejemplo.
+> El plan gratuito "se duerme" si nadie lo usa: **la primera conexión puede tardar hasta 1 minuto**. Después responde normal. Los datos **no se borran**: viven en la base PostgreSQL de Supabase.
 
 En el login, **⚙ Servidor** permite cambiar a dónde se conecta la app: *En internet* (por defecto), *PC local* (emulador con el backend en el PC, `10.0.2.2`) u *Otra dirección* (por ejemplo un túnel https). La publicación se define en `render.yaml` y en el `Dockerfile` de cada microservicio.
+
+### Base de datos en la nube (Supabase)
+
+- PostgreSQL gestionado en **Supabase** (plan gratuito). Tablas: `usuarios`, `codigos_recuperacion` (ms-auth) y `ordenes_trabajo`, `locales`, `equipos`, `eventos_ot` (ms-ordenes). Hibernate las crea solas al iniciar y carga los datos de ejemplo si están vacías.
+- Para ver los datos: Supabase → **Table Editor**. Cada acción hecha en la app (aceptar, check-in, cerrar) se ve en la tabla al refrescar.
+- Conexión por el *Session pooler* (IPv4) con SSL. Los microservicios toman la conexión de variables de entorno: el mismo código funciona con H2 en el PC y con PostgreSQL en la nube.
 
 ## Cómo ejecutar
 
@@ -126,7 +132,7 @@ cd backend/ms-ordenes
 ./mvnw spring-boot:run          # Windows: .\mvnw.cmd spring-boot:run
 ```
 
-Cuando aparece `Started MsAuthApplication` y `Started MsOrdenesApplication`, ya están listos. La base H2 se crea sola en `backend/*/data/`, con datos de ejemplo. El correo de recuperar contraseña se escribe en la consola de ms-auth ("CORREO (simulado)"); para enviarlo de verdad por Gmail: `CORREO_MODO=gmail`, `GMAIL_USUARIO` y `GMAIL_CLAVE_APP`.
+Cuando aparece `Started MsAuthApplication` y `Started MsOrdenesApplication`, ya están listos. En el PC, cada microservicio usa una base **H2** que se crea sola en `backend/*/data/` con datos de ejemplo (no hay que instalar nada). En la nube usa **PostgreSQL**: la dirección y la clave llegan por las variables `DB_URL`, `DB_USER` y `DB_PASSWORD` (configuradas en Render, nunca en el repositorio). El correo de recuperar contraseña se escribe en la consola de ms-auth ("CORREO (simulado)"); para enviarlo de verdad por Gmail: `CORREO_MODO=gmail`, `GMAIL_USUARIO` y `GMAIL_CLAVE_APP`.
 
 **2. App:** abrir la carpeta `ACIS_OT_Terreno` en Android Studio, esperar la sincronización de Gradle y presionar **Run**. Para usar el backend del PC, en el login tocar **⚙ Servidor → PC local (emulador)** (el emulador llega al PC con `10.0.2.2`).
 
