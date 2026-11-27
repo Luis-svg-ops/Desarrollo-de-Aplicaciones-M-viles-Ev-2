@@ -96,6 +96,21 @@ Errores: siempre en JSON `{"status": 409, "error": "mensaje"}`. Los códigos son
 
 Es gratis y no pide clave. Usa su propio cliente Retrofit, **sin** el token de ACIS, y no se guarda en Room. Si llueve o hay viento fuerte y el equipo está en la azotea, la app recomienda postergar.
 
+## Probar la app en un celular (backend en internet)
+
+Los dos microservicios están publicados en **Render** (plan gratuito), así que el APK funciona en cualquier celular Android con internet, sin encender nada:
+
+- ms-auth: `https://acis-ot-auth.onrender.com`
+- ms-ordenes: `https://acis-ot-ordenes.onrender.com`
+
+1. Descargar el APK: [ACIS_OT_Terreno-v1.0-release.apk](https://github.com/Luis-svg-ops/Desarrollo-de-Aplicaciones-M-viles-Ev-2/raw/main/apk/ACIS_OT_Terreno-v1.0-release.apk).
+2. Instalarlo (Android pide permitir "instalar apps de origen desconocido").
+3. Entrar con un usuario de prueba (más abajo).
+
+> El plan gratuito "se duerme" si nadie lo usa: **la primera conexión puede tardar hasta 1 minuto**. Después responde normal. Al reiniciarse, los datos vuelven a los de ejemplo.
+
+En el login, **⚙ Servidor** permite cambiar a dónde se conecta la app: *En internet* (por defecto), *PC local* (emulador con el backend en el PC, `10.0.2.2`) u *Otra dirección* (por ejemplo un túnel https). La publicación se define en `render.yaml` y en el `Dockerfile` de cada microservicio.
+
 ## Cómo ejecutar
 
 Requisitos: **Java 25** (para el backend) y **Android Studio** con un emulador Android 8.0 (API 26) o superior.
@@ -113,7 +128,7 @@ cd backend/ms-ordenes
 
 Cuando aparece `Started MsAuthApplication` y `Started MsOrdenesApplication`, ya están listos. La base H2 se crea sola en `backend/*/data/`, con datos de ejemplo. El correo de recuperar contraseña se escribe en la consola de ms-auth ("CORREO (simulado)"); para enviarlo de verdad por Gmail: `CORREO_MODO=gmail`, `GMAIL_USUARIO` y `GMAIL_CLAVE_APP`.
 
-**2. App:** abrir la carpeta `ACIS_OT_Terreno` en Android Studio, esperar la sincronización de Gradle y presionar **Run**. El emulador llega al PC con `10.0.2.2`, que ya está configurado.
+**2. App:** abrir la carpeta `ACIS_OT_Terreno` en Android Studio, esperar la sincronización de Gradle y presionar **Run**. Para usar el backend del PC, en el login tocar **⚙ Servidor → PC local (emulador)** (el emulador llega al PC con `10.0.2.2`).
 
 **Pruebas:**
 
