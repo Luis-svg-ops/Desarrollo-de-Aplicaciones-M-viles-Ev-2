@@ -1,5 +1,9 @@
 package cl.duoc.acis.view
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material.icons.filled.Settings
+import cl.duoc.acis.data.remote.ConfigServidor
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.LaunchedEffect
@@ -84,6 +88,15 @@ fun LoginScreen(
                     .padding(vertical = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // ⚙ Servidor: elegir si la app usa los microservicios en internet o los del PC
+                var verServidor by remember { mutableStateOf(false) }
+                Row(modifier = Modifier.fillMaxWidth().padding(end = 8.dp), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = { verServidor = true }) {
+                        Icon(Icons.Filled.Settings, contentDescription = null, tint = Color.White)
+                        Text("  Servidor", color = Color.White)
+                    }
+                }
+                if (verServidor) DialogoServidor(onCerrar = { verServidor = false })
                 // Animación 6: al abrir la app, el logo aparece creciendo un poco (bienvenida, una sola vez)
                 val entrada = remember { Animatable(0f) }
                 LaunchedEffect(Unit) { entrada.animateTo(1f, tween(600)) }
@@ -173,3 +186,55 @@ fun LoginScreen(
         }
     }
 }
+
+/** Elegir a qué servidor se conecta la app. La validación de la dirección está en ConfigServidor. */
+@Composable
+private fun DialogoServidor(onCerrar: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var destino by remember { mutableStateOf(ConfigServidor.destino) }
+    var auth by remember { mutableStateOf(ConfigServidor.authPersonalizada) }
+    var ordenes by remember { mutableStateOf(ConfigServidor.ordenesPersonalizada) }
+    var errores by remember { mutableStateOf<Pair<String?, String?>>(null to null) }
+
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onCerrar,
+        title = { Text("Servidor") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                ConfigServidor.Destino.entries.forEach { d ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        androidx.compose.material3.RadioButton(selected = destino == d, onClick = { destino = d })
+                        Text(d.texto)
+                    }
+                }
+                if (destino == ConfigServidor.Destino.PERSONALIZADO) {
+                    CampoValidado(auth, { auth = it; errores = null to errores.second }, "Dirección de ms-auth", errores.first,
+                        Icons.Filled.Settings, tipoTeclado = KeyboardType.Uri)
+                    CampoValidado(ordenes, { ordenes = it; errores = errores.first to null }, "Dirección de ms-ordenes", errores.second,
+                        Icons.Filled.Settings, tipoTeclado = KeyboardType.Uri)
+                }
+                Text(
+                    when (destino) {
+                        ConfigServidor.Destino.NUBE -> "Para un celular real. La primera conexión puede tardar hasta 1 minuto si el servidor estaba dormido."
+                        ConfigServidor.Destino.EMULADOR -> "Para el emulador, con el backend encendido en el PC."
+                        ConfigServidor.Destino.PERSONALIZADO -> "Por ejemplo, un túnel https hacia el PC."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                if (destino == ConfigServidor.Destino.PERSONALIZADO) {
+                    errores = ConfigServidor.validarDireccion(auth) to ConfigServidor.validarDireccion(ordenes)
+                    if (errores.first != null || errores.second != null) return@TextButton
+                }
+                ConfigServidor.guardar(context, destino, auth, ordenes)
+                onCerrar()
+            }) { Text("Guardar") }
+        },
+        dismissButton = { TextButton(onClick = onCerrar) { Text("Cancelar") } }
+    )
+}
+
