@@ -154,7 +154,7 @@ Códigos de local para registrarse: `MAIPU-01`, `MALL-02`, `PROV-03`.
 
 ## APK firmado
 
-- **APK:** `apk/ACIS_OT_Terreno-v1.0-release.apk`, versión 1.0 (2,3 MB). Es release, firmado y optimizado con R8.
+- **APK:** `apk/ACIS_OT_Terreno-v1.0-release.apk`, versión 1.1 (2,3 MB). Es release, firmado y optimizado con R8.
 - **Llave:** `keystore/acis-release.jks` (alias `acis`, RSA 2048, válida 10.000 días).
 - **Configuración:** `keystore/keystore.properties` y `signingConfigs` en `app/build.gradle.kts`. Las variables de entorno `ACIS_STORE_PASSWORD` y `ACIS_KEY_PASSWORD` tienen prioridad sobre el archivo.
 - **Regenerarlo:** `./gradlew assembleRelease`, que deja el resultado en `app/build/outputs/apk/release/app-release.apk`.

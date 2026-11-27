@@ -1,5 +1,6 @@
 package cl.duoc.acis.view
 
+import androidx.compose.foundation.layout.imePadding
 import cl.duoc.acis.util.guardarTexto
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
@@ -197,7 +198,7 @@ fun DetalleOtScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
+                .imePadding().verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {

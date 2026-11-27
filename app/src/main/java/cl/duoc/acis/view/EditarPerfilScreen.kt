@@ -1,5 +1,6 @@
 package cl.duoc.acis.view
 
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,7 +33,7 @@ fun EditarPerfilScreen(viewModel: EditarPerfilViewModel, onVolver: () -> Unit) {
 
     Scaffold(topBar = { AcisTopBar("Editar perfil", onVolver = onVolver) }) { padding ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(24.dp),
+            modifier = Modifier.fillMaxSize().padding(padding).imePadding().verticalScroll(rememberScrollState()).padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             CampoValidado(viewModel.nombre, viewModel::onNombre, "Nombre completo", viewModel.errorNombre, Icons.Filled.Person)

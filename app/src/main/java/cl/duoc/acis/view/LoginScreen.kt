@@ -1,5 +1,6 @@
 package cl.duoc.acis.view
 
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.material.icons.filled.Settings
@@ -78,7 +79,7 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = innerPadding.calculateBottomPadding())
-                .verticalScroll(rememberScrollState())
+                .imePadding().verticalScroll(rememberScrollState())
         ) {
             Column(
                 modifier = Modifier

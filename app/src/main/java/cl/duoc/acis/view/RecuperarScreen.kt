@@ -1,5 +1,6 @@
 package cl.duoc.acis.view
 
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -34,7 +35,7 @@ import cl.duoc.acis.viewmodel.RecuperarViewModel
 fun RecuperarScreen(viewModel: RecuperarViewModel, onVolver: () -> Unit) {
     Scaffold(topBar = { AcisTopBar("Recuperar contraseña", onVolver = onVolver) }) { padding ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(24.dp),
+            modifier = Modifier.fillMaxSize().padding(padding).imePadding().verticalScroll(rememberScrollState()).padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             val listo = viewModel.listo

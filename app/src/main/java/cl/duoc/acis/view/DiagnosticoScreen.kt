@@ -1,5 +1,6 @@
 package cl.duoc.acis.view
 
+import androidx.compose.foundation.layout.imePadding
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -151,7 +152,7 @@ fun DiagnosticoScreen(viewModel: DiagnosticoViewModel, onVolver: () -> Unit, onC
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
+                .imePadding().verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
