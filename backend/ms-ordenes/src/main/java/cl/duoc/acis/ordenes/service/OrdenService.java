@@ -12,6 +12,8 @@ import cl.duoc.acis.ordenes.model.MaquinaEstadosOT;
 import cl.duoc.acis.ordenes.model.OrdenTrabajo;
 import cl.duoc.acis.ordenes.repository.EventoRepository;
 import cl.duoc.acis.ordenes.repository.OrdenTrabajoRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,9 @@ import java.util.Objects;
  */
 @Service
 public class OrdenService {
+
+    /** Registro en la consola del servidor (en Render: pestaña Logs). Muestra en vivo lo que hace la app. */
+    private static final Logger log = LoggerFactory.getLogger(OrdenService.class);
 
     /** Margen para no rechazar una OT programada "ahora mismo" por segundos de diferencia. */
     private static final long MARGEN_MS = 60_000;
@@ -53,11 +58,13 @@ public class OrdenService {
 
     /** Jefe y admin ven todas; el técnico, las suyas; el cliente, las de su local. */
     public List<OrdenTrabajo> listar(UsuarioActual u) {
-        return switch (u.rol()) {
+        List<OrdenTrabajo> lista = switch (u.rol()) {
             case JEFE, ADMIN -> ordenes.findAllByOrderByFechaProgramada();
             case TECNICO -> ordenes.findByTecnicoIdOrderByFechaProgramada(u.id());
             case CLIENTE -> u.localId() == null ? List.of() : ordenes.findByLocalIdOrderByFechaProgramada(u.localId());
         };
+        log.info("[APP] {} ({}) pidió sus OT -> el servidor le entrega {}", u.nombre(), u.rol(), lista.size());
+        return lista;
     }
 
     /** Si la OT no le corresponde, se responde 404 (ni siquiera se revela que existe). */
@@ -232,6 +239,7 @@ public class OrdenService {
     }
 
     private void registrar(OrdenTrabajo ot, EstadoOT estado, String descripcion) {
+        log.info("[OT] {} -> {} | {}", ot.getNumero(), estado.getTexto(), descripcion);
         eventos.save(new EventoOT(ot, estado, descripcion, ahora()));
     }
 

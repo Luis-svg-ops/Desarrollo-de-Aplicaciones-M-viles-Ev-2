@@ -59,6 +59,7 @@ public class AuthService {
             case ACTIVO -> { /* puede entrar */ }
         }
 
+        log.info("[APP] {} inició sesión como {}: se le entrega un token por 8 horas", usuario.getNombre(), usuario.getRol());
         return new LoginResponse(tokens.crear(usuario), "Bearer", tokens.getDuracionSegundos(),
                 UsuarioResponse.de(usuario));
     }
