@@ -3,7 +3,7 @@
 # Los dos comparten el secreto del JWT (generado por Render, no está escrito en el repo).
 # Base de datos: PostgreSQL en Supabase. La dirección y la clave (DB_URL, DB_USER, DB_PASSWORD) se escriben
 # en el panel de Render, en el grupo "acis-secretos": nunca van en el repositorio.
-# Cada microservicio es dueño de sus datos: usa su propio esquema (auth / ordenes).
+# Cada microservicio es dueño de sus datos: usa su propio esquema (acis_auth / acis_ordenes; "auth" ya lo usa Supabase).
 
 envVarGroups:
   - name: acis-secretos
@@ -25,7 +25,7 @@ services:
       - key: ORDENES_URL
         value: https://acis-ot-ordenes.onrender.com
       - key: DB_SCHEMA
-        value: auth
+        value: acis_auth
 
   - type: web
     name: acis-ot-ordenes
@@ -40,4 +40,4 @@ services:
       - key: AUTH_URL
         value: https://acis-ot-auth.onrender.com
       - key: DB_SCHEMA
-        value: ordenes
+        value: acis_ordenes
